@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hus Shift — 設計風格展示</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f0f0; }
+
+  .page-title {
+    text-align: center;
+    padding: 32px 16px 16px;
+    font-size: 14px;
+    color: #666;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px 24px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 8px 20px;
+    border-radius: 999px;
+    border: 1.5px solid #ccc;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #444;
+  }
+  .tab-btn.active {
+    background: #111;
+    border-color: #111;
+    color: white;
+  }
+
+  .demo-section { display: none; padding: 0 16px 48px; }
+  .demo-section.active { display: block; }
+
+  .demo-label {
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 16px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ──────────────────────────────────────
+     STYLE A: 極簡現代 (Linear / Vercel)
+  ────────────────────────────────────── */
+  .style-a {
+    max-width: 390px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .a-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .a-brand { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; color: #000; text-transform: uppercase; }
+  .a-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .a-nav-btn { background: none; border: none; cursor: pointer; color: #999; font-size: 16px; line-height: 1; padding: 4px; }
+  .a-nav-btn:hover { color: #000; }
+  .a-month { font-size: 13px; font-weight: 500; letter-spacing: 0.06em; color: #000; flex: 1; text-align: center; }
+  .a-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 12px 16px; gap: 2px; }
+  .a-weekday { text-align: center; font-size: 10px; letter-spacing: 0.1em; color: #bbb; padding: 6px 0; text-transform: uppercase; }
+  .a-day {
+    border-radius: 6px;
+    padding: 6px 4px;
+    min-height: 64px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .a-day:hover { background: #f9f9f9; }
+  .a-day-num { font-size: 11px; color: #999; margin-bottom: 4px; font-weight: 500; }
+  .a-day-num.today {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%; background: #000; color: #fff; font-size: 10px;
+  }
+  .a-shift { display: flex; align-items: center; gap: 3px; margin-bottom: 2px; }
+  .a-bar { width: 2px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+  .a-names { font-size: 9px; color: #444; letter-spacing: 0.04em; }
+  .a-holiday { font-size: 9px; color: #ef4444; margin-bottom: 2px; }
+  .a-legend { display: flex; gap: 12px; padding: 12px 20px; border-top: 1px solid #f0f0f0; }
+  .a-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #888; letter-spacing: 0.04em; }
+  .a-legend-bar { width: 3px; height: 12px; border-radius: 2px; }
+
+  /* ──────────────────────────────────────
+     STYLE B: 溫暖輕鬆 (Notion / Lark)
+  ────────────────────────────────────── */
+  .style-b {
+    max-width: 390px;
+    margin: 0 auto;
+    background: #fafaf8;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #ebe9e4;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .b-header {
+    background: #fff;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid #ebe9e4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .b-icon { width: 32px; height: 32px; border-radius: 8px; background: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .b-brand { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+  .b-subtitle { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+  .b-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; background: #fff; border-bottom: 1px solid #ebe9e4;
+  }
+  .b-nav-btn {
+    width: 32px; height: 32px; border-radius: 10px; border: 1.5px solid #e5e5e5;
+    background: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #666;
+  }
+  .b-nav-btn:hover { background: #f9f9f9; }
+  .b-month { font-size: 15px; font-weight: 600; color: #111; }
+  .b-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 12px; gap: 4px; }
+  .b-weekday { text-align: center; font-size: 11px; color: #c4b9a8; padding: 4px 0 8px; font-weight: 500; }
+  .b-day {
+    border-radius: 12px;
+    padding: 8px 6px;
+    min-height: 70px;
+    background: white;
+    border: 1.5px solid #f0ece5;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .b-day:hover { border-color: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.12); }
+  .b-day.holiday-bg { background: #fff7ed; border-color: #fed7aa; }
+  .b-day-num { font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+  .b-day-num.today {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%; background: #f59e0b; color: #fff; font-size: 11px;
+  }
+  .b-holiday-name { font-size: 9px; color: #f97316; margin-bottom: 3px; font-weight: 500; }
+  .b-shift { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+  .b-chip {
+    font-size: 9px; padding: 1px 5px; border-radius: 999px; color: white; font-weight: 500;
+  }
+  .b-legend { display: flex; gap: 8px; padding: 12px 16px; flex-wrap: wrap; background: white; border-top: 1px solid #ebe9e4; }
+  .b-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6b7280; }
+  .b-legend-chip { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* ──────────────────────────────────────
+     STYLE C: 深色主題 (When I Work)
+  ────────────────────────────────────── */
+  .style-c {
+    max-width: 390px;
+    margin: 0 auto;
+    background: #0f1117;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #1e2130;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  }
+  .c-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #1e2130;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .c-brand { font-size: 14px; font-weight: 700; color: #f8fafc; letter-spacing: 0.05em; }
+  .c-badge { font-size: 10px; padding: 3px 8px; border-radius: 999px; background: #1e2130; color: #64748b; letter-spacing: 0.06em; }
+  .c-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-bottom: 1px solid #1e2130;
+  }
+  .c-nav-btn {
+    width: 30px; height: 30px; border-radius: 8px; background: #1e2130; border: none;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #64748b;
+  }
+  .c-nav-btn:hover { background: #252b3b; color: #f8fafc; }
+  .c-month { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+  .c-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 10px; gap: 3px; }
+  .c-weekday { text-align: center; font-size: 10px; color: #334155; padding: 4px 0 8px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+  .c-day {
+    border-radius: 8px;
+    padding: 6px 4px;
+    min-height: 66px;
+    cursor: pointer;
+    background: #13161f;
+    border: 1px solid #1e2130;
+    transition: all 0.12s;
+  }
+  .c-day:hover { background: #1a1e2e; border-color: #334155; }
+  .c-day-num { font-size: 11px; color: #475569; margin-bottom: 4px; font-weight: 600; }
+  .c-day-num.today {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%; background: #6366f1; color: #fff; font-size: 10px;
+  }
+  .c-holiday-name { font-size: 9px; color: #f87171; margin-bottom: 3px; }
+  .c-shift { display: flex; align-items: center; gap: 3px; margin-bottom: 2px; }
+  .c-bar { width: 3px; height: 11px; border-radius: 2px; flex-shrink: 0; }
+  .c-names { font-size: 9px; color: #94a3b8; }
+  .c-legend { display: flex; gap: 12px; padding: 12px 20px; border-top: 1px solid #1e2130; flex-wrap: wrap; }
+  .c-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #475569; }
+  .c-legend-bar { width: 3px; height: 12px; border-radius: 2px; }
+
+  /* ──────────────────────────────────────
+     STYLE D: 活潑品牌感 (Cron / Supabase)
+  ────────────────────────────────────── */
+  .style-d {
+    max-width: 390px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(99,102,241,0.12), 0 1px 3px rgba(0,0,0,0.08);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  }
+  .d-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    padding: 20px 20px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .d-brand { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+  .d-brand span { opacity: 0.65; font-weight: 400; }
+  .d-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; }
+  .d-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; background: #fafafa; border-bottom: 1px solid #f0f0f0;
+  }
+  .d-nav-btn {
+    width: 32px; height: 32px; border-radius: 10px; background: white;
+    border: 1.5px solid #e8e5ff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: #6366f1; transition: all 0.12s;
+  }
+  .d-nav-btn:hover { background: #6366f1; color: white; border-color: #6366f1; }
+  .d-month { font-size: 15px; font-weight: 700; color: #111; letter-spacing: -0.02em; }
+  .d-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 12px 12px 8px; gap: 4px; }
+  .d-weekday { text-align: center; font-size: 10px; color: #a5b4fc; padding: 4px 0 8px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .d-day {
+    border-radius: 10px;
+    padding: 6px 4px;
+    min-height: 68px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1.5px solid transparent;
+  }
+  .d-day:hover { background: #f5f3ff; border-color: #c7d2fe; }
+  .d-day.holiday-bg { background: #fff7ed; }
+  .d-day-num { font-size: 11px; font-weight: 700; color: #374151; margin-bottom: 4px; }
+  .d-day-num.today {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 10px;
+  }
+  .d-holiday-name { font-size: 9px; color: #f97316; margin-bottom: 3px; font-weight: 600; }
+  .d-shift { display: flex; align-items: center; gap: 3px; margin-bottom: 2px; }
+  .d-bar { width: 3px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .d-names { font-size: 9px; color: #4b5563; font-weight: 500; }
+  .d-legend { display: flex; gap: 12px; padding: 12px 20px 16px; flex-wrap: wrap; border-top: 1px solid #f0f0f0; }
+  .d-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6b7280; font-weight: 500; }
+  .d-legend-bar { width: 4px; height: 13px; border-radius: 2px; }
+
+  /* shared colors */
+  .c-blue { background: #4F81BD; }
+  .c-green { background: #70AD47; }
+  .c-orange { background: #ED7D31; }
+</style>
+</head>
+<body>
+
+<p class="page-title">Hus Shift — 設計風格展示</p>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('a')">A｜極簡現代</button>
+  <button class="tab-btn" onclick="switchTab('b')">B｜溫暖輕鬆</button>
+  <button class="tab-btn" onclick="switchTab('c')">C｜深色主題</button>
+  <button class="tab-btn" onclick="switchTab('d')">D｜活潑品牌</button>
+</div>
+
+<!-- STYLE A -->
+<div class="demo-section active" id="tab-a">
+  <p class="demo-label">A｜極簡現代 — Linear / Vercel 風格</p>
+  <div class="style-a">
+    <div class="a-header">
+      <div class="a-brand">Hus Shift</div>
+      <div style="font-size:10px;color:#bbb;letter-spacing:0.08em;">班表</div>
+    </div>
+    <div class="a-nav">
+      <button class="a-nav-btn">‹</button>
+      <div class="a-month">2025年 6月</div>
+      <button class="a-nav-btn">›</button>
+    </div>
+    <div class="a-grid">
+      <div class="a-weekday">日</div><div class="a-weekday">一</div><div class="a-weekday">二</div>
+      <div class="a-weekday">三</div><div class="a-weekday">四</div><div class="a-weekday">五</div>
+      <div class="a-weekday">六</div>
+      <!-- empty cells -->
+      <div></div>
+      <div class="a-day">
+        <div class="a-day-num">2</div>
+        <div class="a-shift"><div class="a-bar c-blue"></div><div class="a-names">王 李</div></div>
+        <div class="a-shift"><div class="a-bar c-green"></div><div class="a-names">陳</div></div>
+      </div>
+      <div class="a-day">
+        <div class="a-day-num today">3</div>
+        <div class="a-shift"><div class="a-bar c-blue"></div><div class="a-names">李</div></div>
+        <div class="a-shift"><div class="a-bar c-orange"></div><div class="a-names">王 +1</div></div>
+      </div>
+      <div class="a-day">
+        <div class="a-day-num">4</div>
+        <div class="a-shift"><div class="a-bar c-green"></div><div class="a-names">王</div></div>
+      </div>
+      <div class="a-day">
+        <div class="a-day-num" style="color:#ef4444">5</div>
+        <div class="a-holiday">端午節</div>
+        <div class="a-shift"><div class="a-bar c-blue"></div><div class="a-names">陳</div></div>
+      </div>
+      <div class="a-day">
+        <div class="a-day-num">6</div>
+        <div class="a-shift"><div class="a-bar c-orange"></div><div class="a-names">李</div></div>
+      </div>
+      <div class="a-day">
+        <div class="a-day-num" style="color:#ef4444">7</div>
+      </div>
+    </div>
+    <div class="a-legend">
+      <div class="a-legend-item"><div class="a-legend-bar c-blue"></div>早班 07–15</div>
+      <div class="a-legend-item"><div class="a-legend-bar c-green"></div>午班 11–19</div>
+      <div class="a-legend-item"><div class="a-legend-bar c-orange"></div>晚班 15–23</div>
+    </div>
+  </div>
+</div>
+
+<!-- STYLE B -->
+<div class="demo-section" id="tab-b">
+  <p class="demo-label">B｜溫暖輕鬆 — Notion / Lark 風格</p>
+  <div class="style-b">
+    <div class="b-header">
+      <div class="b-icon">📋</div>
+      <div>
+        <div class="b-brand">Hus Shift</div>
+        <div class="b-subtitle">員工班表</div>
+      </div>
+    </div>
+    <div class="b-nav">
+      <button class="b-nav-btn">‹</button>
+      <div class="b-month">2025年 6月</div>
+      <button class="b-nav-btn">›</button>
+    </div>
+    <div class="b-grid">
+      <div class="b-weekday">日</div><div class="b-weekday">一</div><div class="b-weekday">二</div>
+      <div class="b-weekday">三</div><div class="b-weekday">四</div><div class="b-weekday">五</div>
+      <div class="b-weekday">六</div>
+      <div></div>
+      <div class="b-day">
+        <div class="b-day-num">2</div>
+        <div class="b-shift"><div class="b-chip c-blue">早 王李</div></div>
+        <div class="b-shift"><div class="b-chip c-green">午 陳</div></div>
+      </div>
+      <div class="b-day">
+        <div class="b-day-num today">3</div>
+        <div class="b-shift"><div class="b-chip c-blue">早 李</div></div>
+        <div class="b-shift"><div class="b-chip c-orange">晚 王</div></div>
+      </div>
+      <div class="b-day">
+        <div class="b-day-num">4</div>
+        <div class="b-shift"><div class="b-chip c-green">午 王</div></div>
+      </div>
+      <div class="b-day holiday-bg">
+        <div class="b-day-num" style="color:#ef4444">5</div>
+        <div class="b-holiday-name">🎋 端午節</div>
+        <div class="b-shift"><div class="b-chip c-blue">早 陳</div></div>
+      </div>
+      <div class="b-day">
+        <div class="b-day-num">6</div>
+        <div class="b-shift"><div class="b-chip c-orange">晚 李</div></div>
+      </div>
+      <div class="b-day">
+        <div class="b-day-num" style="color:#ef4444">7</div>
+      </div>
+    </div>
+    <div class="b-legend">
+      <div class="b-legend-item"><div class="b-legend-chip c-blue"></div>早班 07–15</div>
+      <div class="b-legend-item"><div class="b-legend-chip c-green"></div>午班 11–19</div>
+      <div class="b-legend-item"><div class="b-legend-chip c-orange"></div>晚班 15–23</div>
+    </div>
+  </div>
+</div>
+
+<!-- STYLE C -->
+<div class="demo-section" id="tab-c">
+  <p class="demo-label">C｜深色主題 — When I Work 風格</p>
+  <div class="style-c">
+    <div class="c-header">
+      <div class="c-brand">Hus Shift</div>
+      <div class="c-badge">班表</div>
+    </div>
+    <div class="c-nav">
+      <button class="c-nav-btn">‹</button>
+      <div class="c-month">2025年 6月</div>
+      <button class="c-nav-btn">›</button>
+    </div>
+    <div class="c-grid">
+      <div class="c-weekday">日</div><div class="c-weekday">一</div><div class="c-weekday">二</div>
+      <div class="c-weekday">三</div><div class="c-weekday">四</div><div class="c-weekday">五</div>
+      <div class="c-weekday">六</div>
+      <div></div>
+      <div class="c-day">
+        <div class="c-day-num">2</div>
+        <div class="c-shift"><div class="c-bar c-blue"></div><div class="c-names">王 李</div></div>
+        <div class="c-shift"><div class="c-bar c-green"></div><div class="c-names">陳</div></div>
+      </div>
+      <div class="c-day">
+        <div class="c-day-num today">3</div>
+        <div class="c-shift"><div class="c-bar c-blue"></div><div class="c-names">李</div></div>
+        <div class="c-shift"><div class="c-bar c-orange"></div><div class="c-names">王 +1</div></div>
+      </div>
+      <div class="c-day">
+        <div class="c-day-num">4</div>
+        <div class="c-shift"><div class="c-bar c-green"></div><div class="c-names">王</div></div>
+      </div>
+      <div class="c-day">
+        <div class="c-day-num" style="color:#f87171">5</div>
+        <div class="c-holiday-name">端午節</div>
+        <div class="c-shift"><div class="c-bar c-blue"></div><div class="c-names">陳</div></div>
+      </div>
+      <div class="c-day">
+        <div class="c-day-num">6</div>
+        <div class="c-shift"><div class="c-bar c-orange"></div><div class="c-names">李</div></div>
+      </div>
+      <div class="c-day">
+        <div class="c-day-num" style="color:#f87171">7</div>
+      </div>
+    </div>
+    <div class="c-legend">
+      <div class="c-legend-item"><div class="c-legend-bar c-blue"></div>早班</div>
+      <div class="c-legend-item"><div class="c-legend-bar c-green"></div>午班</div>
+      <div class="c-legend-item"><div class="c-legend-bar c-orange"></div>晚班</div>
+    </div>
+  </div>
+</div>
+
+<!-- STYLE D -->
+<div class="demo-section" id="tab-d">
+  <p class="demo-label">D｜活潑品牌感 — Cron / Supabase 風格（推薦）</p>
+  <div class="style-d">
+    <div class="d-header">
+      <div class="d-brand">Hus <span>Shift</span></div>
+      <div class="d-avatar">📅</div>
+    </div>
+    <div class="d-nav">
+      <button class="d-nav-btn">‹</button>
+      <div class="d-month">2025年 6月</div>
+      <button class="d-nav-btn">›</button>
+    </div>
+    <div class="d-grid">
+      <div class="d-weekday">日</div><div class="d-weekday">一</div><div class="d-weekday">二</div>
+      <div class="d-weekday">三</div><div class="d-weekday">四</div><div class="d-weekday">五</div>
+      <div class="d-weekday">六</div>
+      <div></div>
+      <div class="d-day">
+        <div class="d-day-num">2</div>
+        <div class="d-shift"><div class="d-bar c-blue"></div><div class="d-names">王 李</div></div>
+        <div class="d-shift"><div class="d-bar c-green"></div><div class="d-names">陳</div></div>
+      </div>
+      <div class="d-day">
+        <div class="d-day-num today">3</div>
+        <div class="d-shift"><div class="d-bar c-blue"></div><div class="d-names">李</div></div>
+        <div class="d-shift"><div class="d-bar c-orange"></div><div class="d-names">王 +1</div></div>
+      </div>
+      <div class="d-day">
+        <div class="d-day-num">4</div>
+        <div class="d-shift"><div class="d-bar c-green"></div><div class="d-names">王</div></div>
+      </div>
+      <div class="d-day holiday-bg">
+        <div class="d-day-num" style="color:#ef4444">5</div>
+        <div class="d-holiday-name">端午節</div>
+        <div class="d-shift"><div class="d-bar c-blue"></div><div class="d-names">陳</div></div>
+      </div>
+      <div class="d-day">
+        <div class="d-day-num">6</div>
+        <div class="d-shift"><div class="d-bar c-orange"></div><div class="d-names">李</div></div>
+      </div>
+      <div class="d-day">
+        <div class="d-day-num" style="color:#ef4444">7</div>
+      </div>
+    </div>
+    <div class="d-legend">
+      <div class="d-legend-item"><div class="d-legend-bar c-blue"></div>早班 07–15</div>
+      <div class="d-legend-item"><div class="d-legend-bar c-green"></div>午班 11–19</div>
+      <div class="d-legend-item"><div class="d-legend-bar c-orange"></div>晚班 15–23</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.demo-section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

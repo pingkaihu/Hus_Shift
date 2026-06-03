@@ -1,6 +1,6 @@
 # PRD — 排班管理網站
 
-> 版本：1.0  
+> 版本：1.1  
 > 狀態：Ready for development  
 > 技術棧：Next.js 15 · Supabase · Vercel  
 
@@ -259,6 +259,39 @@ export const config = {
 **目標用戶**：員工、訪客  
 **裝置**：手機優先
 
+#### 頁面框架
+
+頁面最上方固定 Header，顯示品牌名稱 `Hus Shift`（硬寫，不從資料庫讀取）。
+
+```
+┌─────────────────────┐
+│  Hus Shift  班表    │  ← 固定 Header
+│─────────────────────│
+│  < 2025年 6月 >     │  ← MonthNavigator
+│─────────────────────│
+│  月曆 Grid          │
+│─────────────────────│
+│  ShiftLegend        │
+└─────────────────────┘
+```
+
+#### 渲染策略
+
+使用 Next.js ISR（Incremental Static Regeneration），`revalidate: 300`（5 分鐘）。
+
+```ts
+export const revalidate = 300
+```
+
+班表資料非即時性，5 分鐘延遲對訪客完全可接受；CDN cache 可承受員工輪班前的流量高峰。
+
+#### 空狀態 / 錯誤狀態
+
+| 狀態 | 顯示方式 |
+|------|----------|
+| 該月無排班資料 | DayCell 全空白，月曆下方顯示灰色小字「本月尚無排班資料」 |
+| Supabase 呼叫失敗 | 整頁 error boundary，顯示「載入失敗，請重新整理」 |
+
 #### 資料載入
 
 Server Component，一次撈三種資料：
@@ -322,7 +355,7 @@ const [entries, shifts, holidays] = await Promise.all([
 ### 6.2 Admin 週視圖排班介面（`/admin/schedule/[week]`）
 
 **目標用戶**：Admin  
-**裝置**：桌機優先
+**裝置**：桌機優先，手機同樣支援（含拖曳模式）
 
 #### 頁面佈局
 
@@ -371,9 +404,11 @@ type ScheduleMatrix = {
 
 #### 新增排班：模式 B（拖曳多日）
 
-1. `mousedown` 起始格子，進入 `dragging` 模式
+使用 **Pointer Events**（`pointerdown` / `pointermove` / `pointerup`）實作，同時支援滑鼠與觸控。
+
+1. `pointerdown` 起始格子，進入 `dragging` 模式
 2. 拖曳經過的格子即時反白
-3. `mouseup` 結束，進入 `multi` 模式
+3. `pointerup` 結束，進入 `multi` 模式
 4. 右側展開批量排班 Panel
 5. Panel 顯示已選日期清單
 6. 選班別 + 勾選員工
@@ -389,6 +424,21 @@ type SelectionState =
   | { mode: 'dragging'; dates: string[] }
   | { mode: 'multi'; dates: string[] }
 ```
+
+#### 員工篩選
+
+週視圖頂部提供員工篩選下拉選單：
+- 預設「全部員工」
+- 選擇單一員工後：該員工的 `StaffChip` 高亮，其他員工淡出（opacity 降低）
+- 純前端 filter state，不重新 fetch 資料
+
+#### 空狀態 / 錯誤狀態
+
+| 狀態 | 顯示方式 |
+|------|----------|
+| 該週無排班資料 | ScheduleGrid 格子全空，正常顯示矩陣結構 |
+| 尚未新增員工 | ShiftSelector 員工列表顯示「尚未新增員工」+ 跳轉 `/admin/staff` 連結 |
+| Supabase 呼叫失敗 | 整頁 error boundary，顯示「載入失敗，請重新整理」 |
 
 #### 刪除排班
 
@@ -409,10 +459,11 @@ type SelectionState =
 
 ### 6.3 員工管理（`/admin/staff`）
 
-- 員工列表：姓名、Email、角色、狀態（啟用 / 停用）
+- 員工列表：姓名、Email、角色、狀態（啟用 / 停用），頂部顯示「N / 50 人」計數
 - 新增員工：填寫姓名 + Email → 呼叫 Next.js API Route（`/api/create-staff`）→ 用 Supabase Admin SDK 建立 auth user → INSERT profiles
 - 編輯員工（`/admin/staff/[id]`）：修改姓名、電話、啟用狀態
 - 停用員工（`is_active: false`）不刪除資料，避免歷史排班紀錄損毀
+- **人數上限保護**：`create-staff` API Route 新增員工前先檢查 `is_active = true` 的員工數，超過 50 人則拒絕並回傳錯誤訊息
 
 #### 新增員工 API Route
 
@@ -460,22 +511,29 @@ type SelectionState =
 
 ## 7. 元件清單
 
-### 公開視圖
+> **命名慣例**：兩個視圖都有 `DayCell` 元件，但用資料夾隔離，import 時靠路徑區分，不加前綴。
+> - `components/calendar/DayCell.tsx`（公開月曆）
+> - `components/admin/schedule/DayCell.tsx`（Admin 週視圖）
+
+### 公開視圖（`components/calendar/`）
 
 | 元件 | 說明 |
 |------|------|
+| `PageHeader` | 頂部品牌列，顯示 `Hus Shift` |
 | `MonthNavigator` | 年月顯示 + 上下月切換 |
 | `CalendarGrid` | 7 欄月曆 Grid，處理月初補空格 |
 | `DayCell` | 單日格子，色條 + 姓氏 + 假日標記 |
 | `ShiftBar` | 班次色條 + 姓氏（最多 2 人，超過 +N） |
 | `DayDetailSheet` | Bottom sheet，點擊日期展開完整排班 |
 | `ShiftLegend` | 班次顏色圖例 |
+| `EmptyMonth` | 無排班時的空狀態提示 |
 
-### Admin 排班介面
+### Admin 排班介面（`components/admin/schedule/`）
 
 | 元件 | 說明 |
 |------|------|
 | `WeekNavigator` | 週次顯示 + 上下週切換 |
+| `StaffFilter` | 員工篩選下拉，選擇後高亮單一員工 |
 | `ScheduleGrid` | 週矩陣主體，管理 selection state |
 | `DateHeader` | 欄頭：日期 + 假日標記 + 出勤熱度底色 |
 | `ShiftRow` | 班次橫列（早 / 午 / 晚） |
@@ -545,7 +603,22 @@ LINE_NOTIFY_TOKEN=
 
 ---
 
-## 10. 技術注意事項
+## 10. 設計規範
+
+詳細設計 token（色彩、字型、間距、圓角、陰影、動態）見 [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md)。
+
+### 雙介面視覺調性
+
+| 介面 | 底色調性 | 圓角 | Sidebar |
+|------|----------|------|---------|
+| 公開月曆 `/schedule/*` | 暖白（stone 系列） | 較圓（10px） | 無 |
+| Admin `/admin/*` | 冷灰（zinc 系列） | 較方（6–10px） | 深色（zinc-900） |
+
+兩個介面共用 accent color `#6366f1`（靛藍）作為品牌識別錨點。
+
+---
+
+## 11. 技術注意事項
 
 ### Supabase Client 分離
 
@@ -578,7 +651,7 @@ LINE_NOTIFY_TOKEN=
 
 ---
 
-## 11. 未來擴充預留
+## 12. 未來擴充預留
 
 以下功能已在 Schema 設計中預留，未來開發時不需要改動現有資料表：
 
@@ -586,6 +659,8 @@ LINE_NOTIFY_TOKEN=
 |------|----------|
 | 通知系統 | 新增 `notifications` 表即可 |
 | 員工登入 | `profiles.role = 'staff'` 已存在，middleware 加判斷即可 |
+| 員工首次登入 | Phase 4 實作：`create-staff` 時用 `supabaseAdmin.auth.admin.generateLink` 產生 invite link，透過 Resend 寄送歡迎信；目前建立帳號後不發送任何信件 |
 | 請假換班 | 新增 `leave_requests` 表 |
 | 多門市 | `profiles` / `schedule_entries` 加 `store_id FK` |
 | 薪資計算 | `schedule_entries` 已有 `shift_id` 可連結時薪資料 |
+| 品牌設定 | Header 目前硬寫 `Hus Shift`；未來需要多門市或自訂店名時，新增 `store_settings` 表（key-value）並從 DB 讀取 |
