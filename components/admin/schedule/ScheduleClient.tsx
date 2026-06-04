@@ -1,0 +1,232 @@
+'use client'
+
+import { useState, useCallback } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
+import type { Shift, Profile, ScheduleEntry, Holiday, SelectionState, ScheduleMatrix } from '@/lib/types'
+import WeekNavigator from './WeekNavigator'
+import StaffFilter from './StaffFilter'
+import ScheduleGrid from './ScheduleGrid'
+import DayModal from './DayModal'
+import BulkPanel from './BulkPanel'
+
+interface Props {
+  weekDates: string[]
+  weekParam: string
+  shifts: Shift[]
+  profiles: Profile[]
+  initialEntries: ScheduleEntry[]
+  holidays: Holiday[]
+}
+
+function buildMatrix(shifts: Shift[], dates: string[], entries: ScheduleEntry[]): ScheduleMatrix {
+  const matrix: ScheduleMatrix = {}
+  for (const shift of shifts) {
+    matrix[shift.id] = {}
+    for (const date of dates) {
+      matrix[shift.id][date] = entries.filter(
+        e => e.shift_id === shift.id && e.work_date === date
+      )
+    }
+  }
+  return matrix
+}
+
+export default function ScheduleClient({
+  weekDates, weekParam, shifts, profiles, initialEntries, holidays,
+}: Props) {
+  const supabase = createClient()
+  const [matrix, setMatrix] = useState<ScheduleMatrix>(() =>
+    buildMatrix(shifts, weekDates, initialEntries)
+  )
+  const [selection, setSelection] = useState<SelectionState>({ mode: 'idle' })
+  const [filteredProfileId, setFilteredProfileId] = useState<string | null>(null)
+
+  const handleDateClick = (date: string) => setSelection({ mode: 'single', date })
+  const handleClose = () => setSelection({ mode: 'idle' })
+
+  const handleDragStart = (date: string) =>
+    setSelection({ mode: 'dragging', dates: [date] })
+
+  const handleDragEnter = (date: string) =>
+    setSelection(prev =>
+      prev.mode === 'dragging' && !prev.dates.includes(date)
+        ? { mode: 'dragging', dates: [...prev.dates, date] }
+        : prev
+    )
+
+  const handleDragEnd = useCallback(() =>
+    setSelection(prev =>
+      prev.mode === 'dragging'
+        ? prev.dates.length === 1
+          ? { mode: 'single', date: prev.dates[0] }
+          : { mode: 'multi', dates: prev.dates }
+        : prev
+    ), [])
+
+  // Insert entries for (shiftId, profileIds[], dates[]), skipping conflicts
+  const handleInsert = async (
+    shiftId: string,
+    profileIds: string[],
+    dates: string[]
+  ): Promise<void> => {
+    type NewEntry = Omit<ScheduleEntry, 'id' | 'created_at'>
+    const toInsert: NewEntry[] = []
+    let skipped = 0
+
+    for (const date of dates) {
+      for (const profileId of profileIds) {
+        const existing = matrix[shiftId]?.[date] ?? []
+        if (existing.some(e => e.profile_id === profileId)) {
+          skipped++
+        } else {
+          toInsert.push({ profile_id: profileId, shift_id: shiftId, work_date: date, note: null })
+        }
+      }
+    }
+
+    if (toInsert.length === 0) {
+      toast.info(`跳過 ${skipped} 筆重複排班`)
+      return
+    }
+
+    // Optimistic: add temp entries
+    const tempEntries: ScheduleEntry[] = toInsert.map((e, i) => ({
+      ...e,
+      id: `temp-${Date.now()}-${i}`,
+      created_at: new Date().toISOString(),
+    }))
+
+    setMatrix(prev => {
+      const next = structuredClone(prev)
+      for (const entry of tempEntries) {
+        next[entry.shift_id][entry.work_date] = [
+          ...(next[entry.shift_id][entry.work_date] ?? []),
+          entry,
+        ]
+      }
+      return next
+    })
+
+    const { data, error } = await supabase
+      .from('schedule_entries')
+      .insert(toInsert)
+      .select()
+
+    if (error) {
+      // Rollback
+      const tempIds = new Set(tempEntries.map(e => e.id))
+      setMatrix(prev => {
+        const next = structuredClone(prev)
+        for (const entry of tempEntries) {
+          next[entry.shift_id][entry.work_date] =
+            (next[entry.shift_id][entry.work_date] ?? []).filter(e => !tempIds.has(e.id))
+        }
+        return next
+      })
+      toast.error('新增失敗，請重試')
+      return
+    }
+
+    // Replace temp IDs with real DB IDs
+    if (data) {
+      setMatrix(prev => {
+        const next = structuredClone(prev)
+        tempEntries.forEach((temp, i) => {
+          const real = data[i]
+          if (!real) return
+          next[temp.shift_id][temp.work_date] =
+            (next[temp.shift_id][temp.work_date] ?? []).map(e => e.id === temp.id ? real : e)
+        })
+        return next
+      })
+    }
+
+    if (skipped > 0) {
+      toast.success(`已新增 ${toInsert.length} 筆，跳過 ${skipped} 筆重複排班`)
+    } else {
+      toast.success(`已新增 ${toInsert.length} 筆排班`)
+    }
+  }
+
+  const handleDelete = async (entry: ScheduleEntry) => {
+    // Optimistic remove
+    setMatrix(prev => {
+      const next = structuredClone(prev)
+      next[entry.shift_id][entry.work_date] =
+        (next[entry.shift_id][entry.work_date] ?? []).filter(e => e.id !== entry.id)
+      return next
+    })
+
+    const { error } = await supabase
+      .from('schedule_entries')
+      .delete()
+      .eq('id', entry.id)
+
+    if (error) {
+      // Rollback
+      setMatrix(prev => {
+        const next = structuredClone(prev)
+        next[entry.shift_id][entry.work_date] = [
+          ...(next[entry.shift_id][entry.work_date] ?? []),
+          entry,
+        ]
+        return next
+      })
+      toast.error('刪除失敗，請重試')
+    }
+  }
+
+  const currentDate = selection.mode === 'single' ? selection.date : ''
+  const currentDates = selection.mode === 'multi' ? selection.dates : []
+
+  return (
+    <div className="flex h-full relative overflow-hidden">
+      <div className="flex flex-col flex-1 gap-4 p-6 overflow-hidden">
+        <div className="flex items-center justify-between">
+          <WeekNavigator weekParam={weekParam} />
+          <StaffFilter
+            profiles={profiles}
+            value={filteredProfileId}
+            onChange={setFilteredProfileId}
+          />
+        </div>
+        <ScheduleGrid
+          shifts={shifts}
+          weekDates={weekDates}
+          matrix={matrix}
+          holidays={holidays}
+          profiles={profiles}
+          selection={selection}
+          filteredProfileId={filteredProfileId}
+          onDateClick={handleDateClick}
+          onDragStart={handleDragStart}
+          onDragEnter={handleDragEnter}
+          onDragEnd={handleDragEnd}
+          onDelete={handleDelete}
+        />
+      </div>
+
+      <DayModal
+        open={selection.mode === 'single'}
+        date={currentDate}
+        shifts={shifts}
+        profiles={profiles}
+        matrix={matrix}
+        onInsert={handleInsert}
+        onDelete={handleDelete}
+        onClose={handleClose}
+      />
+
+      <BulkPanel
+        open={selection.mode === 'multi'}
+        dates={currentDates}
+        shifts={shifts}
+        profiles={profiles}
+        matrix={matrix}
+        onInsert={handleInsert}
+        onClose={handleClose}
+      />
+    </div>
+  )
+}
