@@ -27,12 +27,12 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
-  if (path.startsWith('/admin')) {
+  if (path.startsWith('/schedule_admin')) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('da_profiles')
       .select('role')
       .eq('id', user.id)
       .single()
@@ -46,14 +46,14 @@ export async function middleware(request: NextRequest) {
 
   if (path === '/login' && user) {
     const { data: profile } = await supabase
-      .from('profiles')
+      .from('da_profiles')
       .select('role')
       .eq('id', user.id)
       .single()
     if (profile?.role === 'admin') {
       const now = toZonedTime(new Date(), 'Asia/Taipei')
       const week = `${getISOWeekYear(now)}-W${String(getISOWeek(now)).padStart(2, '0')}`
-      return NextResponse.redirect(new URL(`/admin/schedule/${week}`, request.url))
+      return NextResponse.redirect(new URL(`/schedule_admin/${week}`, request.url))
     }
   }
 
@@ -61,5 +61,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/login'],
+  matcher: ['/schedule_admin/:path*', '/login'],
 }

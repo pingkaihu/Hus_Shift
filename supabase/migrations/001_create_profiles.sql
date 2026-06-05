@@ -1,4 +1,4 @@
-create table profiles (
+create table da_profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   full_name   text not null default '',
   email       text not null,
@@ -8,11 +8,11 @@ create table profiles (
   created_at  timestamptz not null default now()
 );
 
--- Auto-create profile row when a new auth user is created
-create or replace function handle_new_user()
+-- Auto-create da_profiles row when a new auth user is created
+create or replace function da_handle_new_user()
 returns trigger as $$
 begin
-  insert into profiles (id, full_name, email)
+  insert into da_profiles (id, full_name, email)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
@@ -22,6 +22,6 @@ begin
 end;
 $$ language plpgsql security definer;
 
-create trigger on_auth_user_created
+create trigger da_on_auth_user_created
   after insert on auth.users
-  for each row execute function handle_new_user();
+  for each row execute function da_handle_new_user();

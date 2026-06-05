@@ -11,7 +11,7 @@ export default async function WeekPage({ params }: PageProps) {
   const { week } = await params
   const weekStart = parseWeekParam(week)
   if (!weekStart) {
-    redirect(`/admin/schedule/${getCurrentWeekParam()}`)
+    redirect(`/schedule_admin/${getCurrentWeekParam()}`)
   }
 
   const weekDates = getWeekDates(weekStart)
@@ -25,14 +25,14 @@ export default async function WeekPage({ params }: PageProps) {
     { data: holidays },
   ] = await Promise.all([
     supabase
-      .from('schedule_entries')
+      .from('da_schedule_entries')
       .select('*')
       .gte('work_date', dateStart)
       .lte('work_date', dateEnd),
-    supabase.from('shifts').select('*').order('start_time'),
-    supabase.from('profiles').select('*').eq('is_active', true).order('full_name'),
+    supabase.from('da_shifts').select('*').order('start_time'),
+    supabase.from('da_profiles').select('*').eq('is_active', true).order('full_name'),
     supabase
-      .from('holidays')
+      .from('da_holidays')
       .select('*')
       .gte('date', dateStart)
       .lte('date', dateEnd),

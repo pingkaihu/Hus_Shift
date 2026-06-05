@@ -39,13 +39,13 @@ export default async function SchedulePage({ params }: PageProps) {
     { data: holidays },
   ] = await Promise.all([
     supabase
-      .from('schedule_entries')
-      .select('*, profiles:public_profiles(id, full_name)')
+      .from('da_schedule_entries')
+      .select('*, profiles:da_public_profiles(id, full_name)')
       .gte('work_date', start)
       .lte('work_date', end),
-    supabase.from('shifts').select('*').order('start_time'),
+    supabase.from('da_shifts').select('*').order('start_time'),
     supabase
-      .from('holidays')
+      .from('da_holidays')
       .select('*')
       .gte('date', start)
       .lte('date', end),

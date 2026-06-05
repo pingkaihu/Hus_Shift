@@ -1,4 +1,4 @@
-create view public_profiles as
+create view da_public_profiles as
   select id, full_name, role
-  from profiles
+  from da_profiles
   where is_active = true;

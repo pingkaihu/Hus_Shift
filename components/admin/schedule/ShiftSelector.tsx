@@ -89,7 +89,7 @@ export default function ShiftSelector({
           {profiles.length === 0 ? (
             <p className="text-sm text-zinc-400">
               尚未新增員工。{' '}
-              <a href="/admin/staff" className="text-indigo-500 hover:underline">前往新增</a>
+              <a href="/staff_admin" className="text-indigo-500 hover:underline">前往新增</a>
             </p>
           ) : (
             <div className="flex flex-col gap-2">

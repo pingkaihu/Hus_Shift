@@ -15,7 +15,7 @@ export default function WeekNavigator({ weekParam }: Props) {
   const label = weekStart ? formatWeekLabel(weekStart) : weekParam
 
   function navigate(param: string) {
-    router.push(`/admin/schedule/${param}`)
+    router.push(`/schedule_admin/${param}`)
   }
 
   return (

@@ -109,7 +109,7 @@ export default function ScheduleClient({
     })
 
     const { data, error } = await supabase
-      .from('schedule_entries')
+      .from('da_schedule_entries')
       .insert(toInsert)
       .select()
 
@@ -159,7 +159,7 @@ export default function ScheduleClient({
     })
 
     const { error } = await supabase
-      .from('schedule_entries')
+      .from('da_schedule_entries')
       .delete()
       .eq('id', entry.id)
 

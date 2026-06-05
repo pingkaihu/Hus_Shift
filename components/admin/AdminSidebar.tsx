@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation'
 import { CalendarDays, Users, CalendarOff, Settings } from 'lucide-react'
 
 const navItems = [
-  { href: '/admin/schedule', label: '排班', icon: CalendarDays, stub: false },
-  { href: '/admin/staff',    label: '員工', icon: Users,        stub: true  },
-  { href: '/admin/holidays', label: '節假日', icon: CalendarOff, stub: true  },
-  { href: '/admin/settings', label: '設定',  icon: Settings,    stub: true  },
+  { href: '/schedule_admin', label: '排班', icon: CalendarDays, stub: false },
+  { href: '/staff_admin',    label: '員工', icon: Users,        stub: true  },
+  { href: '/holidays_admin', label: '節假日', icon: CalendarOff, stub: true  },
+  { href: '/settings_admin', label: '設定',  icon: Settings,    stub: true  },
 ]
 
 export default function AdminSidebar() {

@@ -1,4 +1,4 @@
-create table holidays (
+create table da_holidays (
   date        date primary key,
   name        text not null,
   is_holiday  boolean not null,
@@ -6,4 +6,4 @@ create table holidays (
   year        int not null
 );
 
-create index on holidays (year);
+create index on da_holidays (year);

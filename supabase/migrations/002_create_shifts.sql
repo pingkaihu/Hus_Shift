@@ -1,4 +1,4 @@
-create table shifts (
+create table da_shifts (
   id         uuid primary key default gen_random_uuid(),
   name       text not null,
   start_time time not null,
