@@ -71,6 +71,10 @@ type ScheduleMatrix = {
 }
 ```
 
+## Git Rules
+
+**No Co-Authored-By:** Never add `Co-Authored-By:` trailers to commit messages.
+
 ## Critical Technical Rules
 
 **Date handling:** All dates stored as `date` type (`YYYY-MM-DD`). Always use `date-fns` (+ `date-fns-tz` for Asia/Taipei timezone). Never hand-roll date arithmetic.
