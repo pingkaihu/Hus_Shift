@@ -15,7 +15,7 @@ export default function AdminSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-56 shrink-0 bg-zinc-900 flex flex-col py-6 px-3">
+    <aside className="w-56 shrink-0 bg-zinc-900 hidden md:flex flex-col py-6 px-3">
       <div className="px-3 mb-8">
         <span className="text-white font-bold text-base tracking-tight">Hus Shift</span>
       </div>
