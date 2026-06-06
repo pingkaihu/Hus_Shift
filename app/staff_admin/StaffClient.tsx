@@ -28,7 +28,7 @@ export default function StaffClient({ initialProfiles }: Props) {
   const [isActive, setIsActive] = useState(true)
 
   const openAdd = () => {
-    setFullName(''); setEmail('')
+    setFullName(''); setEmail(''); setPhone(''); setIsActive(true)
     setDialog({ mode: 'add' })
   }
 
@@ -55,9 +55,13 @@ export default function StaffClient({ initialProfiles }: Props) {
       }
       const { data: newProfile } = await supabase
         .from('da_profiles').select('*').eq('id', data.id).single()
-      if (newProfile) setProfiles(prev => [...prev, newProfile])
-      toast.success(`已新增員工 ${fullName.trim()}`)
-      setDialog(null)
+      if (newProfile) {
+        setProfiles(prev => [...prev, newProfile])
+        toast.success(`已新增員工 ${fullName.trim()}`)
+        setDialog(null)
+      } else {
+        toast.error('新增成功，但資料載入失敗，請重新整理頁面')
+      }
     } finally {
       setLoading(false)
     }
@@ -67,19 +71,22 @@ export default function StaffClient({ initialProfiles }: Props) {
     if (dialog?.mode !== 'edit') return
     if (!fullName.trim()) return
     setLoading(true)
-    const { error } = await supabase
-      .from('da_profiles')
-      .update({ full_name: fullName.trim(), phone: phone.trim() || null, is_active: isActive })
-      .eq('id', dialog.profile.id)
-    setLoading(false)
-    if (error) { toast.error('更新失敗'); return }
-    setProfiles(prev => prev.map(p =>
-      p.id === dialog.profile.id
-        ? { ...p, full_name: fullName.trim(), phone: phone.trim() || null, is_active: isActive }
-        : p
-    ))
-    toast.success('已更新員工資料')
-    setDialog(null)
+    try {
+      const { error } = await supabase
+        .from('da_profiles')
+        .update({ full_name: fullName.trim(), phone: phone.trim() || null, is_active: isActive })
+        .eq('id', dialog.profile.id)
+      if (error) { toast.error('更新失敗'); return }
+      setProfiles(prev => prev.map(p =>
+        p.id === (dialog as { mode: 'edit'; profile: Profile }).profile.id
+          ? { ...p, full_name: fullName.trim(), phone: phone.trim() || null, is_active: isActive }
+          : p
+      ))
+      toast.success('已更新員工資料')
+      setDialog(null)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const activeCount = profiles.filter(p => p.is_active).length
