@@ -34,6 +34,7 @@ export default function StaffClient({ initialProfiles }: Props) {
 
   const openEdit = (profile: Profile) => {
     setFullName(profile.full_name)
+    setEmail(profile.email)
     setPhone(profile.phone ?? '')
     setIsActive(profile.is_active)
     setDialog({ mode: 'edit', profile })
@@ -69,17 +70,31 @@ export default function StaffClient({ initialProfiles }: Props) {
 
   const handleEdit = async () => {
     if (dialog?.mode !== 'edit') return
-    if (!fullName.trim()) return
+    if (!fullName.trim() || !email.trim()) return
     setLoading(true)
     try {
+      const profileId = dialog.profile.id
+      const emailChanged = email.trim() !== dialog.profile.email
+
+      if (emailChanged) {
+        const res = await fetch('/api/update-staff-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: profileId, email: email.trim() }),
+        })
+        const data = await res.json()
+        if (!res.ok) { toast.error(data.error ?? 'Email 更新失敗'); return }
+      }
+
       const { error } = await supabase
         .from('da_profiles')
         .update({ full_name: fullName.trim(), phone: phone.trim() || null, is_active: isActive })
-        .eq('id', dialog.profile.id)
+        .eq('id', profileId)
       if (error) { toast.error('更新失敗'); return }
+
       setProfiles(prev => prev.map(p =>
-        p.id === (dialog as { mode: 'edit'; profile: Profile }).profile.id
-          ? { ...p, full_name: fullName.trim(), phone: phone.trim() || null, is_active: isActive }
+        p.id === profileId
+          ? { ...p, full_name: fullName.trim(), email: email.trim(), phone: phone.trim() || null, is_active: isActive }
           : p
       ))
       toast.success('已更新員工資料')
@@ -110,6 +125,7 @@ export default function StaffClient({ initialProfiles }: Props) {
             <tr className="border-b border-zinc-100 text-zinc-500 text-xs">
               <th className="px-4 py-3 text-left font-medium">姓名</th>
               <th className="px-4 py-3 text-left font-medium">Email</th>
+              <th className="px-4 py-3 text-left font-medium">電話</th>
               <th className="px-4 py-3 text-left font-medium">角色</th>
               <th className="px-4 py-3 text-left font-medium">狀態</th>
               <th className="px-4 py-3" />
@@ -120,6 +136,7 @@ export default function StaffClient({ initialProfiles }: Props) {
               <tr key={p.id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50">
                 <td className="px-4 py-3 font-medium text-zinc-900">{p.full_name}</td>
                 <td className="px-4 py-3 text-zinc-500">{p.email}</td>
+                <td className="px-4 py-3 text-zinc-500">{p.phone ?? '—'}</td>
                 <td className="px-4 py-3">
                   <Badge variant={p.role === 'admin' ? 'default' : 'outline'}>
                     {p.role === 'admin' ? '管理員' : '員工'}
@@ -139,7 +156,7 @@ export default function StaffClient({ initialProfiles }: Props) {
             ))}
             {profiles.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-400 text-sm">
+                <td colSpan={6} className="px-4 py-8 text-center text-zinc-400 text-sm">
                   尚無員工資料
                 </td>
               </tr>
@@ -199,6 +216,16 @@ export default function StaffClient({ initialProfiles }: Props) {
               />
             </div>
             <div className="flex flex-col gap-1.5">
+              <Label htmlFor="edit-email">Email</Label>
+              <input
+                id="edit-email"
+                type="email"
+                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
               <Label htmlFor="edit-phone">電話</Label>
               <input
                 id="edit-phone"
@@ -220,7 +247,7 @@ export default function StaffClient({ initialProfiles }: Props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
-            <Button onClick={handleEdit} disabled={loading || !fullName.trim()}>
+            <Button onClick={handleEdit} disabled={loading || !fullName.trim() || !email.trim()}>
               {loading ? '儲存中...' : '儲存'}
             </Button>
           </DialogFooter>
