@@ -35,11 +35,12 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
   const [isHoliday, setIsHoliday] = useState(true)
 
   const fetchYear = async (y: number) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('da_holidays')
       .select('*')
       .eq('year', y)
       .order('date')
+    if (error) { toast.error('載入失敗'); return }
     setHolidays(data ?? [])
   }
 
@@ -47,6 +48,7 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
     if (!val) return
     const y = parseInt(val)
     setYear(y)
+    setHolidays([])
     await fetchYear(y)
   }
 
