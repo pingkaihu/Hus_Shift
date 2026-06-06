@@ -42,8 +42,10 @@ export default function ScheduleClient({
   const [selection, setSelection] = useState<SelectionState>({ mode: 'idle' })
   const [filteredProfileId, setFilteredProfileId] = useState<string | null>(null)
   const [density, setDensity] = useState<'full' | 'compact'>(() => {
-    if (typeof window === 'undefined') return 'full'
-    return (localStorage.getItem('adminScheduleDensity') as 'full' | 'compact') ?? 'full'
+    if (typeof window === 'undefined') return 'compact'
+    const saved = localStorage.getItem('adminScheduleDensity')
+    if (saved) return saved as 'full' | 'compact'
+    return window.innerWidth < 768 ? 'compact' : 'full'
   })
 
   const handleDateClick = (date: string) => {
