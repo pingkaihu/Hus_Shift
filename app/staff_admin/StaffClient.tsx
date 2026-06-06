@@ -83,9 +83,12 @@ function StaffFormBody({
   )
 }
 
+const adminFirst = (a: Profile, b: Profile) =>
+  a.role === b.role ? 0 : a.role === 'admin' ? -1 : 1
+
 export default function StaffClient({ initialProfiles }: Props) {
   const supabase = createClient()
-  const [profiles, setProfiles] = useState<Profile[]>(initialProfiles)
+  const [profiles, setProfiles] = useState<Profile[]>([...initialProfiles].sort(adminFirst))
   const [dialog, setDialog] = useState<{ mode: 'add' } | { mode: 'edit'; profile: Profile } | null>(null)
   const [loading, setLoading] = useState(false)
   const isMobile = useIsMobile()
@@ -125,7 +128,7 @@ export default function StaffClient({ initialProfiles }: Props) {
       const { data: newProfile } = await supabase
         .from('da_profiles').select('*').eq('id', data.id).single()
       if (newProfile) {
-        setProfiles(prev => [...prev, newProfile])
+        setProfiles(prev => [...prev, newProfile].sort(adminFirst))
         toast.success(`已新增員工 ${fullName.trim()}`)
         setDialog(null)
       } else {
@@ -194,7 +197,7 @@ export default function StaffClient({ initialProfiles }: Props) {
               <th className="px-4 py-3 text-left font-medium">姓名</th>
               <th className="px-4 py-3 text-left font-medium hidden md:table-cell">Email</th>
               <th className="px-4 py-3 text-left font-medium hidden md:table-cell">電話</th>
-              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">角色</th>
+              <th className="px-4 py-3 text-left font-medium">角色</th>
               <th className="px-4 py-3 text-left font-medium">狀態</th>
               <th className="px-4 py-3" />
             </tr>
@@ -205,7 +208,7 @@ export default function StaffClient({ initialProfiles }: Props) {
                 <td className="px-4 py-3 font-medium text-zinc-900">{p.full_name}</td>
                 <td className="px-4 py-3 text-zinc-500 hidden md:table-cell">{p.email}</td>
                 <td className="px-4 py-3 text-zinc-500 hidden md:table-cell">{p.phone ?? '—'}</td>
-                <td className="px-4 py-3 hidden md:table-cell">
+                <td className="px-4 py-3">
                   <Badge variant={p.role === 'admin' ? 'default' : 'outline'}>
                     {p.role === 'admin' ? '管理員' : '員工'}
                   </Badge>
