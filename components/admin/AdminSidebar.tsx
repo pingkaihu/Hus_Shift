@@ -6,9 +6,9 @@ import { CalendarDays, Users, CalendarOff, Settings } from 'lucide-react'
 
 const navItems = [
   { href: '/schedule_admin', label: '排班', icon: CalendarDays, stub: false },
-  { href: '/staff_admin',    label: '員工', icon: Users,        stub: true  },
-  { href: '/holidays_admin', label: '節假日', icon: CalendarOff, stub: true  },
-  { href: '/settings_admin', label: '設定',  icon: Settings,    stub: true  },
+  { href: '/staff_admin',    label: '員工', icon: Users,        stub: false },
+  { href: '/holidays_admin', label: '節假日', icon: CalendarOff, stub: false },
+  { href: '/settings_admin', label: '設定',  icon: Settings,    stub: false },
 ]
 
 export default function AdminSidebar() {

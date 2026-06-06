@@ -27,7 +27,8 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
-  if (path.startsWith('/schedule_admin')) {
+  const ADMIN_PATHS = ['/schedule_admin', '/staff_admin', '/holidays_admin', '/settings_admin']
+  if (ADMIN_PATHS.some(p => path.startsWith(p))) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
@@ -61,5 +62,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/schedule_admin/:path*', '/login'],
+  matcher: ['/schedule_admin/:path*', '/staff_admin', '/holidays_admin', '/settings_admin', '/login'],
 }
