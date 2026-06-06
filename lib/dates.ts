@@ -10,6 +10,9 @@
   getISOWeekYear,
   startOfMonth,
   endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
 } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
 
@@ -85,6 +88,17 @@ export function prevWeekParam(weekStart: Date): string {
 
 export function nextWeekParam(weekStart: Date): string {
   return formatWeekParam(addWeeks(weekStart, 1))
+}
+
+/** Returns all dates for a monthly calendar grid (fills leading/trailing days to complete Sun–Sat weeks) */
+export function getMonthCalendarDates(monthStart: Date): { date: string; isCurrentMonth: boolean }[] {
+  const monthEnd = endOfMonth(monthStart)
+  const calStart = startOfWeek(monthStart, { weekStartsOn: 0 })
+  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 0 })
+  return eachDayOfInterval({ start: calStart, end: calEnd }).map(d => ({
+    date: format(d, 'yyyy-MM-dd'),
+    isCurrentMonth: d.getMonth() === monthStart.getMonth(),
+  }))
 }
 
 export function prevMonthParam(monthDate: Date): string {

@@ -12,10 +12,11 @@ interface Props {
   matrix: ScheduleMatrix
   onInsert: (shiftId: string, profileIds: string[], dates: string[]) => Promise<void>
   onClose: () => void
+  onClear: () => void
 }
 
 export default function BulkPanel({
-  open, dates, shifts, profiles, matrix, onInsert, onClose,
+  open, dates, shifts, profiles, matrix, onInsert, onClose, onClear,
 }: Props) {
   const sortedDates = [...dates].sort()
 
@@ -27,9 +28,14 @@ export default function BulkPanel({
     >
       <div className="flex items-center justify-between p-4 border-b border-zinc-200">
         <h3 className="text-sm font-semibold text-zinc-800">批量排班</h3>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="text-xs text-zinc-500" onClick={onClear}>
+            取消選取
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">

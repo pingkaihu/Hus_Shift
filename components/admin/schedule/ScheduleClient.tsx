@@ -1,18 +1,18 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import type { Shift, Profile, ScheduleEntry, Holiday, SelectionState, ScheduleMatrix } from '@/lib/types'
-import WeekNavigator from './WeekNavigator'
+import MonthNavigator from './MonthNavigator'
 import StaffFilter from './StaffFilter'
-import ScheduleGrid from './ScheduleGrid'
+import MonthGrid from './MonthGrid'
 import DayModal from './DayModal'
 import BulkPanel from './BulkPanel'
 
 interface Props {
-  weekDates: string[]
-  weekParam: string
+  monthParam: string
+  calendarDates: { date: string; isCurrentMonth: boolean }[]
   shifts: Shift[]
   profiles: Profile[]
   initialEntries: ScheduleEntry[]
@@ -33,36 +33,40 @@ function buildMatrix(shifts: Shift[], dates: string[], entries: ScheduleEntry[])
 }
 
 export default function ScheduleClient({
-  weekDates, weekParam, shifts, profiles, initialEntries, holidays,
+  monthParam, calendarDates, shifts, profiles, initialEntries, holidays,
 }: Props) {
   const supabase = createClient()
   const [matrix, setMatrix] = useState<ScheduleMatrix>(() =>
-    buildMatrix(shifts, weekDates, initialEntries)
+    buildMatrix(shifts, calendarDates.map(d => d.date), initialEntries)
   )
   const [selection, setSelection] = useState<SelectionState>({ mode: 'idle' })
   const [filteredProfileId, setFilteredProfileId] = useState<string | null>(null)
+  const [density, setDensity] = useState<'full' | 'compact'>(() => {
+    if (typeof window === 'undefined') return 'full'
+    return (localStorage.getItem('adminScheduleDensity') as 'full' | 'compact') ?? 'full'
+  })
 
-  const handleDateClick = (date: string) => setSelection({ mode: 'single', date })
+  const handleDateClick = (date: string) => {
+    setSelection(prev => {
+      if (prev.mode === 'idle') return { mode: 'single', date }
+      if (prev.mode === 'single') {
+        if (prev.date === date) return { mode: 'idle' }
+        return { mode: 'multi', dates: [prev.date, date] }
+      }
+      if (prev.mode === 'multi') {
+        const next = prev.dates.includes(date)
+          ? prev.dates.filter(d => d !== date)
+          : [...prev.dates, date]
+        if (next.length === 0) return { mode: 'idle' }
+        if (next.length === 1) return { mode: 'single', date: next[0] }
+        return { mode: 'multi', dates: next }
+      }
+      return prev
+    })
+  }
+
   const handleClose = () => setSelection({ mode: 'idle' })
-
-  const handleDragStart = (date: string) =>
-    setSelection({ mode: 'dragging', dates: [date] })
-
-  const handleDragEnter = (date: string) =>
-    setSelection(prev =>
-      prev.mode === 'dragging' && !prev.dates.includes(date)
-        ? { mode: 'dragging', dates: [...prev.dates, date] }
-        : prev
-    )
-
-  const handleDragEnd = useCallback(() =>
-    setSelection(prev =>
-      prev.mode === 'dragging'
-        ? prev.dates.length === 1
-          ? { mode: 'single', date: prev.dates[0] }
-          : { mode: 'multi', dates: prev.dates }
-        : prev
-    ), [])
+  const handleClear = () => setSelection({ mode: 'idle' })
 
   // Insert entries for (shiftId, profileIds[], dates[]), skipping conflicts
   const handleInsert = async (
@@ -177,39 +181,43 @@ export default function ScheduleClient({
     }
   }
 
-  const currentDate = selection.mode === 'single' ? selection.date : ''
-  const currentDates = selection.mode === 'multi' ? selection.dates : []
-
   return (
     <div className="flex h-full relative overflow-hidden">
-      <div className="flex flex-col flex-1 gap-4 p-6 overflow-hidden">
+      <div className="flex flex-col flex-1 gap-4 p-6 overflow-auto">
         <div className="flex items-center justify-between">
-          <WeekNavigator weekParam={weekParam} />
-          <StaffFilter
-            profiles={profiles}
-            value={filteredProfileId}
-            onChange={setFilteredProfileId}
-          />
+          <MonthNavigator monthParam={monthParam} />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const next = density === 'full' ? 'compact' : 'full'
+                setDensity(next)
+                localStorage.setItem('adminScheduleDensity', next)
+              }}
+              className="px-3 py-1.5 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+            >
+              {density === 'full' ? '精簡' : '詳細'}
+            </button>
+            <StaffFilter profiles={profiles} value={filteredProfileId} onChange={setFilteredProfileId} />
+          </div>
         </div>
-        <ScheduleGrid
+        <MonthGrid
+          calendarDates={calendarDates}
           shifts={shifts}
-          weekDates={weekDates}
+          profiles={profiles}
           matrix={matrix}
           holidays={holidays}
-          profiles={profiles}
           selection={selection}
           filteredProfileId={filteredProfileId}
+          density={density}
           onDateClick={handleDateClick}
-          onDragStart={handleDragStart}
-          onDragEnter={handleDragEnter}
-          onDragEnd={handleDragEnd}
           onDelete={handleDelete}
         />
       </div>
 
       <DayModal
         open={selection.mode === 'single'}
-        date={currentDate}
+        date={selection.mode === 'single' ? selection.date : ''}
         shifts={shifts}
         profiles={profiles}
         matrix={matrix}
@@ -220,12 +228,13 @@ export default function ScheduleClient({
 
       <BulkPanel
         open={selection.mode === 'multi'}
-        dates={currentDates}
+        dates={selection.mode === 'multi' ? selection.dates : []}
         shifts={shifts}
         profiles={profiles}
         matrix={matrix}
         onInsert={handleInsert}
         onClose={handleClose}
+        onClear={handleClear}
       />
     </div>
   )
