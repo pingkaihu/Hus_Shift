@@ -89,10 +89,11 @@ export default function SettingsClient({ initialShifts }: Props) {
   }
 
   const handleDelete = async (shift: Shift) => {
-    const { count } = await supabase
+    const { count, error: countError } = await supabase
       .from('da_schedule_entries')
       .select('*', { count: 'exact', head: true })
       .eq('shift_id', shift.id)
+    if (countError) { toast.error('檢查失敗，請再試一次'); return }
     if ((count ?? 0) > 0) {
       toast.error('此班次已有排班紀錄，無法刪除')
       return
