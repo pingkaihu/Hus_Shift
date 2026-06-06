@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const GOV_API_URL =
-  'https://data.gov.tw/api/v2/rest/datastore/6d05a362-7b96-40d7-a00e-e714a984f98b'
+const GOV_API_BASE =
+  'https://allen0099.github.io/taiwan-calendar'
 
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -26,8 +26,7 @@ export async function POST(request: Request) {
   // Fetch government API
   let govRes: Response
   try {
-    govRes = await fetch(`${GOV_API_URL}?limit=500&filters[year]=${year}`, {
-      headers: { 'User-Agent': 'HusShift/1.0' },
+    govRes = await fetch(`${GOV_API_BASE}/${year}/all.json`, {
       cache: 'no-store',
     })
   } catch {
@@ -45,23 +44,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '政府 API 回應格式錯誤' }, { status: 502 })
   }
 
-  const records: Record<string, string>[] = (json as { result?: { records?: Record<string, string>[] } }).result?.records ?? []
+  type GovRecord = { date: string; name: string; isHoliday: boolean; description: string }
+  type GovJson = { months?: { holidays?: GovRecord[] }[] }
+  const govJson = json as GovJson
+  const records: GovRecord[] = govJson.months?.flatMap(m => m.holidays ?? []) ?? []
 
   if (records.length === 0) {
     return NextResponse.json({ error: `${year} 年無資料` }, { status: 404 })
   }
 
-  // Transform: "20260101" → "2026-01-01", "是" → true
+  // Transform: "20260101" → "2026-01-01"; keep only named entries (holidays + make-up workdays)
   const rows = records
-    .filter(r => r.date?.length === 8)
+    .filter(r => r.date?.length === 8 && r.name)
     .map(r => ({
       date: `${r.date.slice(0, 4)}-${r.date.slice(4, 6)}-${r.date.slice(6, 8)}`,
-      name: (r.name ?? r.description ?? '').trim(),
-      is_holiday: r.isHoliday === '是',
+      name: r.name.trim(),
+      is_holiday: Boolean(r.isHoliday),
       year,
       description: r.description?.trim() || null,
     }))
-    .filter(r => r.name)
 
   // Count existing to compute inserted vs updated
   const { data: existingRows, error: countError } = await supabase
