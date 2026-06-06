@@ -47,3 +47,4 @@ PLAN.md
 .claude/
 .superpowers/
 test_pw_temp.cjs
+.worktrees/
