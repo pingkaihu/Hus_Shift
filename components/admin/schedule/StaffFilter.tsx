@@ -1,3 +1,5 @@
+'use client'
+
 import {
   Select,
   SelectContent,
@@ -14,13 +16,17 @@ interface Props {
 }
 
 export default function StaffFilter({ profiles, value, onChange }: Props) {
+  const displayName = value
+    ? (profiles.find(p => p.id === value)?.full_name ?? '全部員工')
+    : '全部員工'
+
   return (
     <Select
       value={value ?? 'all'}
       onValueChange={v => onChange(v === 'all' ? null : v)}
     >
       <SelectTrigger className="w-36 h-8 text-sm border-zinc-200">
-        <SelectValue placeholder="全部員工" />
+        <SelectValue placeholder="全部員工">{displayName}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">全部員工</SelectItem>
