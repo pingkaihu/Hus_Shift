@@ -13,12 +13,64 @@ import { Label } from '@/components/ui/label'
 import {
   Select, SelectTrigger, SelectContent, SelectItem, SelectValue,
 } from '@/components/ui/select'
+import { Drawer } from 'vaul'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import type { Holiday } from '@/lib/types'
 
 interface Props {
   initialHolidays: Holiday[]
   initialYear: number
   availableYears: number[]
+}
+
+const INPUT_CLASS = 'h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+
+function HolidayFormBody({
+  date, setDate,
+  name, setName,
+  isHoliday, setIsHoliday,
+}: {
+  date: string; setDate: (v: string) => void
+  name: string; setName: (v: string) => void
+  isHoliday: boolean; setIsHoliday: (v: boolean) => void
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="hol-date">日期</Label>
+        <input
+          id="hol-date"
+          type="date"
+          className={INPUT_CLASS}
+          value={date}
+          onChange={e => setDate(e.target.value)}
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="hol-name">名稱</Label>
+        <input
+          id="hol-name"
+          className={INPUT_CLASS}
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="元旦"
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>類型</Label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+            <input type="radio" checked={isHoliday} onChange={() => setIsHoliday(true)} className="h-4 w-4" />
+            放假
+          </label>
+          <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+            <input type="radio" checked={!isHoliday} onChange={() => setIsHoliday(false)} className="h-4 w-4" />
+            補班
+          </label>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function HolidaysClient({ initialHolidays, initialYear, availableYears }: Props) {
@@ -31,6 +83,7 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
   const [loading, setLoading] = useState(false)
   const [addingWeekends, setAddingWeekends] = useState(false)
   const [filter, setFilter] = useState<'official' | 'all'>('official')
+  const isMobile = useIsMobile()
 
   const [date, setDate] = useState('')
   const [name, setName] = useState('')
@@ -118,7 +171,7 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 mb-6 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-semibold text-zinc-900">節假日管理</h1>
           <Select value={String(year)} onValueChange={handleYearChange}>
@@ -132,7 +185,7 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
             </SelectContent>
           </Select>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleAddWeekends} disabled={addingWeekends}>
             <CalendarDays className="h-4 w-4 mr-1" />
             {addingWeekends ? '新增中...' : '新增週末'}
@@ -203,52 +256,47 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
         </table>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>手動新增節假日</DialogTitle></DialogHeader>
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="hol-date">日期</Label>
-              <input
-                id="hol-date"
-                type="date"
-                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="hol-name">名稱</Label>
-              <input
-                id="hol-name"
-                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="元旦"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>類型</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-                  <input type="radio" checked={isHoliday} onChange={() => setIsHoliday(true)} className="h-4 w-4" />
-                  放假
-                </label>
-                <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-                  <input type="radio" checked={!isHoliday} onChange={() => setIsHoliday(false)} className="h-4 w-4" />
-                  補班
-                </label>
+      {isMobile ? (
+        <Drawer.Root open={dialogOpen} onOpenChange={(o) => !o && setDialogOpen(false)}>
+          <Drawer.Portal>
+            <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+            <Drawer.Content className="bg-white flex flex-col rounded-t-2xl fixed bottom-0 left-0 right-0 z-50 max-h-[90dvh] outline-none">
+              <div className="mx-auto mt-3 mb-2 w-12 h-1.5 rounded-full bg-zinc-300 flex-shrink-0" />
+              <div className="overflow-y-auto flex-1 px-5 pb-8">
+                <p className="text-base font-semibold text-zinc-900 mb-4">手動新增節假日</p>
+                <HolidayFormBody
+                  date={date} setDate={setDate}
+                  name={name} setName={setName}
+                  isHoliday={isHoliday} setIsHoliday={setIsHoliday}
+                />
+                <div className="flex gap-2 pt-4">
+                  <Button className="flex-1" onClick={handleAdd} disabled={loading || !date || !name.trim()}>
+                    {loading ? '新增中...' : '新增'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
+                </div>
               </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
-            <Button onClick={handleAdd} disabled={loading || !date || !name.trim()}>
-              {loading ? '新增中...' : '新增'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </Drawer.Content>
+          </Drawer.Portal>
+        </Drawer.Root>
+      ) : (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>手動新增節假日</DialogTitle></DialogHeader>
+            <HolidayFormBody
+              date={date} setDate={setDate}
+              name={name} setName={setName}
+              isHoliday={isHoliday} setIsHoliday={setIsHoliday}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>取消</Button>
+              <Button onClick={handleAdd} disabled={loading || !date || !name.trim()}>
+                {loading ? '新增中...' : '新增'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
