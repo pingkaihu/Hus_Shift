@@ -206,9 +206,27 @@ export default function ScheduleClient({
   return (
     <div className="flex h-full relative overflow-hidden">
       <div className="flex flex-col flex-1 gap-4 p-6 overflow-auto">
-        <div className="flex items-center justify-between">
-          <MonthNavigator monthParam={monthParam} />
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2">
+          {/* Row 1: month navigator + desktop-only controls */}
+          <div className="flex items-center justify-between">
+            <MonthNavigator monthParam={monthParam} />
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = density === 'full' ? 'compact' : 'full'
+                  setDensity(next)
+                  localStorage.setItem('adminScheduleDensity', next)
+                }}
+                className="px-3 py-1.5 text-xs border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+              >
+                {density === 'full' ? '精簡' : '詳細'}
+              </button>
+              <StaffFilter profiles={profiles} value={filteredProfileId} onChange={setFilteredProfileId} />
+            </div>
+          </div>
+          {/* Row 2: mobile-only controls */}
+          <div className="flex items-center justify-between md:hidden">
             <button
               type="button"
               onClick={() => {
