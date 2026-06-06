@@ -10,10 +10,77 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { Drawer } from 'vaul'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 import type { Profile } from '@/lib/types'
 
 interface Props {
   initialProfiles: Profile[]
+}
+
+const INPUT_CLASS = 'h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+
+function StaffFormBody({
+  mode,
+  fullName, setFullName,
+  email, setEmail,
+  phone, setPhone,
+  isActive, setIsActive,
+}: {
+  mode: 'add' | 'edit'
+  fullName: string; setFullName: (v: string) => void
+  email: string; setEmail: (v: string) => void
+  phone: string; setPhone: (v: string) => void
+  isActive: boolean; setIsActive: (v: boolean) => void
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={`${mode}-name`}>姓名</Label>
+        <input
+          id={`${mode}-name`}
+          className={INPUT_CLASS}
+          value={fullName}
+          onChange={e => setFullName(e.target.value)}
+          placeholder={mode === 'add' ? '王小明' : undefined}
+        />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={`${mode}-email`}>Email</Label>
+        <input
+          id={`${mode}-email`}
+          type="email"
+          className={INPUT_CLASS}
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder={mode === 'add' ? 'staff@example.com' : undefined}
+        />
+      </div>
+      {mode === 'edit' && (
+        <>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="edit-phone">電話</Label>
+            <input
+              id="edit-phone"
+              className={INPUT_CLASS}
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="0912-345-678"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={e => setIsActive(e.target.checked)}
+              className="h-4 w-4 rounded"
+            />
+            啟用帳號
+          </label>
+        </>
+      )}
+    </div>
+  )
 }
 
 export default function StaffClient({ initialProfiles }: Props) {
@@ -21,6 +88,7 @@ export default function StaffClient({ initialProfiles }: Props) {
   const [profiles, setProfiles] = useState<Profile[]>(initialProfiles)
   const [dialog, setDialog] = useState<{ mode: 'add' } | { mode: 'edit'; profile: Profile } | null>(null)
   const [loading, setLoading] = useState(false)
+  const isMobile = useIsMobile()
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -124,9 +192,9 @@ export default function StaffClient({ initialProfiles }: Props) {
           <thead>
             <tr className="border-b border-zinc-100 text-zinc-500 text-xs">
               <th className="px-4 py-3 text-left font-medium">姓名</th>
-              <th className="px-4 py-3 text-left font-medium">Email</th>
-              <th className="px-4 py-3 text-left font-medium">電話</th>
-              <th className="px-4 py-3 text-left font-medium">角色</th>
+              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">Email</th>
+              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">電話</th>
+              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">角色</th>
               <th className="px-4 py-3 text-left font-medium">狀態</th>
               <th className="px-4 py-3" />
             </tr>
@@ -135,9 +203,9 @@ export default function StaffClient({ initialProfiles }: Props) {
             {profiles.map(p => (
               <tr key={p.id} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50">
                 <td className="px-4 py-3 font-medium text-zinc-900">{p.full_name}</td>
-                <td className="px-4 py-3 text-zinc-500">{p.email}</td>
-                <td className="px-4 py-3 text-zinc-500">{p.phone ?? '—'}</td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 text-zinc-500 hidden md:table-cell">{p.email}</td>
+                <td className="px-4 py-3 text-zinc-500 hidden md:table-cell">{p.phone ?? '—'}</td>
+                <td className="px-4 py-3 hidden md:table-cell">
                   <Badge variant={p.role === 'admin' ? 'default' : 'outline'}>
                     {p.role === 'admin' ? '管理員' : '員工'}
                   </Badge>
@@ -165,94 +233,99 @@ export default function StaffClient({ initialProfiles }: Props) {
         </table>
       </div>
 
-      {/* Add Dialog */}
-      <Dialog open={dialog?.mode === 'add'} onOpenChange={open => !open && setDialog(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>新增員工</DialogTitle></DialogHeader>
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="add-name">姓名</Label>
-              <input
-                id="add-name"
-                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                placeholder="王小明"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="add-email">Email</Label>
-              <input
-                id="add-email"
-                type="email"
-                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="staff@example.com"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
-            <Button onClick={handleAdd} disabled={loading || !fullName.trim() || !email.trim()}>
-              {loading ? '新增中...' : '新增'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Add Dialog / Drawer */}
+      {isMobile ? (
+        <Drawer.Root open={dialog?.mode === 'add'} onOpenChange={(o) => !o && setDialog(null)}>
+          <Drawer.Portal>
+            <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+            <Drawer.Content className="bg-white flex flex-col rounded-t-2xl fixed bottom-0 left-0 right-0 z-50 max-h-[90dvh] outline-none">
+              <div className="mx-auto mt-3 mb-2 w-12 h-1.5 rounded-full bg-zinc-300 flex-shrink-0" />
+              <div className="overflow-y-auto flex-1 px-5 pb-8">
+                <p className="text-base font-semibold text-zinc-900 mb-4">新增員工</p>
+                <StaffFormBody
+                  mode="add"
+                  fullName={fullName} setFullName={setFullName}
+                  email={email} setEmail={setEmail}
+                  phone={phone} setPhone={setPhone}
+                  isActive={isActive} setIsActive={setIsActive}
+                />
+                <div className="flex gap-2 pt-4">
+                  <Button className="flex-1" onClick={handleAdd} disabled={loading || !fullName.trim() || !email.trim()}>
+                    {loading ? '新增中...' : '新增'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
+                </div>
+              </div>
+            </Drawer.Content>
+          </Drawer.Portal>
+        </Drawer.Root>
+      ) : (
+        <Dialog open={dialog?.mode === 'add'} onOpenChange={(open) => !open && setDialog(null)}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>新增員工</DialogTitle></DialogHeader>
+            <StaffFormBody
+              mode="add"
+              fullName={fullName} setFullName={setFullName}
+              email={email} setEmail={setEmail}
+              phone={phone} setPhone={setPhone}
+              isActive={isActive} setIsActive={setIsActive}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
+              <Button onClick={handleAdd} disabled={loading || !fullName.trim() || !email.trim()}>
+                {loading ? '新增中...' : '新增'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
-      {/* Edit Dialog */}
-      <Dialog open={dialog?.mode === 'edit'} onOpenChange={open => !open && setDialog(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>編輯員工</DialogTitle></DialogHeader>
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-name">姓名</Label>
-              <input
-                id="edit-name"
-                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-email">Email</Label>
-              <input
-                id="edit-email"
-                type="email"
-                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-phone">電話</Label>
-              <input
-                id="edit-phone"
-                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                placeholder="0912-345-678"
-              />
-            </div>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={e => setIsActive(e.target.checked)}
-                className="h-4 w-4 rounded"
-              />
-              啟用帳號
-            </label>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
-            <Button onClick={handleEdit} disabled={loading || !fullName.trim() || !email.trim()}>
-              {loading ? '儲存中...' : '儲存'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Edit Dialog / Drawer */}
+      {isMobile ? (
+        <Drawer.Root open={dialog?.mode === 'edit'} onOpenChange={(o) => !o && setDialog(null)}>
+          <Drawer.Portal>
+            <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+            <Drawer.Content className="bg-white flex flex-col rounded-t-2xl fixed bottom-0 left-0 right-0 z-50 max-h-[90dvh] outline-none">
+              <div className="mx-auto mt-3 mb-2 w-12 h-1.5 rounded-full bg-zinc-300 flex-shrink-0" />
+              <div className="overflow-y-auto flex-1 px-5 pb-8">
+                <p className="text-base font-semibold text-zinc-900 mb-4">編輯員工</p>
+                <StaffFormBody
+                  mode="edit"
+                  fullName={fullName} setFullName={setFullName}
+                  email={email} setEmail={setEmail}
+                  phone={phone} setPhone={setPhone}
+                  isActive={isActive} setIsActive={setIsActive}
+                />
+                <div className="flex gap-2 pt-4">
+                  <Button className="flex-1" onClick={handleEdit} disabled={loading || !fullName.trim() || !email.trim()}>
+                    {loading ? '儲存中...' : '儲存'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
+                </div>
+              </div>
+            </Drawer.Content>
+          </Drawer.Portal>
+        </Drawer.Root>
+      ) : (
+        <Dialog open={dialog?.mode === 'edit'} onOpenChange={(open) => !open && setDialog(null)}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>編輯員工</DialogTitle></DialogHeader>
+            <StaffFormBody
+              mode="edit"
+              fullName={fullName} setFullName={setFullName}
+              email={email} setEmail={setEmail}
+              phone={phone} setPhone={setPhone}
+              isActive={isActive} setIsActive={setIsActive}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
+              <Button onClick={handleEdit} disabled={loading || !fullName.trim() || !email.trim()}>
+                {loading ? '儲存中...' : '儲存'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
