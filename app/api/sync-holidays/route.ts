@@ -9,6 +9,9 @@ export async function POST(request: Request) {
   const yearStr = searchParams.get('year') ?? String(new Date().getFullYear())
   const year = parseInt(yearStr)
 
+  if (isNaN(year) || year < 2000 || year > 2100)
+    return NextResponse.json({ error: '無效的年份' }, { status: 400 })
+
   // Auth: admin only
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -35,8 +38,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '政府 API 回應錯誤' }, { status: 502 })
   }
 
-  const json = await govRes.json()
-  const records: Record<string, string>[] = json.result?.records ?? []
+  let json: unknown
+  try {
+    json = await govRes.json()
+  } catch {
+    return NextResponse.json({ error: '政府 API 回應格式錯誤' }, { status: 502 })
+  }
+
+  const records: Record<string, string>[] = (json as { result?: { records?: Record<string, string>[] } }).result?.records ?? []
 
   if (records.length === 0) {
     return NextResponse.json({ error: `${year} 年無資料` }, { status: 404 })
@@ -55,10 +64,12 @@ export async function POST(request: Request) {
     .filter(r => r.name)
 
   // Count existing to compute inserted vs updated
-  const { data: existingRows } = await supabase
+  const { data: existingRows, error: countError } = await supabase
     .from('da_holidays')
     .select('date')
     .in('date', rows.map(r => r.date))
+
+  if (countError) console.error('Failed to fetch existing holidays for count:', countError.message)
 
   const existingDates = new Set(existingRows?.map(r => r.date) ?? [])
   const inserted = rows.filter(r => !existingDates.has(r.date)).length
