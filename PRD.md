@@ -199,8 +199,11 @@ create policy "public: read only" on holidays
 |------|------|-------|
 | `/` | 可瀏覽 | 可瀏覽 |
 | `/schedule/[month]` | 可瀏覽 | 可瀏覽 |
-| `/login` | 可瀏覽 | redirect `/admin/schedule` |
-| `/admin/*` | redirect `/login` | 完整存取 |
+| `/login` | 可瀏覽 | redirect `/schedule_admin/當週` |
+| `/schedule_admin/*` | redirect `/login` | 完整存取 |
+| `/staff_admin` | redirect `/login` | 完整存取 |
+| `/holidays_admin` | redirect `/login` | 完整存取 |
+| `/settings_admin` | redirect `/login` | 完整存取 |
 
 ---
 
@@ -214,39 +217,45 @@ app/
 │       └── page.tsx                  # 公開月曆視圖（Server Component）
 ├── login/
 │   └── page.tsx                      # Magic Link 登入（僅 admin 使用）
-├── admin/
+├── schedule_admin/
 │   ├── layout.tsx                    # Sidebar 導覽，桌機優先
-│   ├── schedule/
-│   │   ├── page.tsx                  # redirect → 本週 /admin/schedule/[week]
-│   │   └── [week]/
-│   │       └── page.tsx              # 週視圖排班介面
-│   ├── staff/
-│   │   ├── page.tsx                  # 員工列表
-│   │   └── [id]/
-│   │       └── page.tsx              # 員工詳細 / 編輯
-│   ├── holidays/
-│   │   └── page.tsx                  # 節假日列表 + 手動補入
-│   └── settings/
-│       └── page.tsx                  # 班次設定、店家資訊
-└── middleware.ts                     # Auth guard + role redirect
+│   ├── page.tsx                      # redirect → 本週 /schedule_admin/[week]
+│   └── [week]/
+│       └── page.tsx                  # 週視圖排班介面
+├── staff_admin/
+│   ├── layout.tsx                    # 複用 AdminSidebar
+│   ├── page.tsx                      # Server: 員工列表
+│   └── StaffClient.tsx               # Client: 列表 + 新增/編輯 Dialog
+├── holidays_admin/
+│   ├── layout.tsx                    # 複用 AdminSidebar
+│   ├── page.tsx                      # Server: 節假日列表
+│   └── HolidaysClient.tsx            # Client: 列表 + 手動新增 Dialog + 同步按鈕
+├── settings_admin/
+│   ├── layout.tsx                    # 複用 AdminSidebar
+│   ├── page.tsx                      # Server: 班次列表
+│   └── SettingsClient.tsx            # Client: 列表 + 新增/編輯 Dialog
+└── api/
+    ├── create-staff/route.ts         # service_role 建立 auth user + profile
+    └── sync-holidays/route.ts        # 抓 data.gov.tw，upsert da_holidays
 ```
 
 ### 5.1 URL 格式規範
 
 - 公開月曆：`/schedule/2025-06`（`YYYY-MM`）
-- Admin 週視圖：`/admin/schedule/2025-W24`（ISO week）
+- Admin 週視圖：`/schedule_admin/2025-W24`（ISO week）
+- Admin 管理頁：`/staff_admin`、`/holidays_admin`、`/settings_admin`
 
 ### 5.2 `middleware.ts` 邏輯
 
 ```ts
-// 非 /admin/* 路徑全部放行
-// /admin/* 檢查 Supabase session
+// 非 admin 路徑全部放行
+// /schedule_admin/*、/staff_admin、/holidays_admin、/settings_admin
 //   → 未登入：redirect /login
-//   → 已登入但非 admin：redirect /
+//   → 已登入但非 admin：redirect /schedule/當月
 //   → admin：放行
 
 export const config = {
-  matcher: ['/admin/:path*']
+  matcher: ['/schedule_admin/:path*', '/staff_admin', '/holidays_admin', '/settings_admin', '/login']
 }
 ```
 
@@ -457,11 +466,11 @@ type SelectionState =
 
 ---
 
-### 6.3 員工管理（`/admin/staff`）
+### 6.3 員工管理（`/staff_admin`）
 
 - 員工列表：姓名、Email、角色、狀態（啟用 / 停用），頂部顯示「N / 50 人」計數
-- 新增員工：填寫姓名 + Email → 呼叫 Next.js API Route（`/api/create-staff`）→ 用 Supabase Admin SDK 建立 auth user → INSERT profiles
-- 編輯員工（`/admin/staff/[id]`）：修改姓名、電話、啟用狀態
+- **新增員工**：點擊「新增員工」→ Dialog 填姓名 + Email → POST `/api/create-staff` → 用 Supabase Admin SDK 建立 auth user（`email_confirm: true`，不寄信）→ INSERT `da_profiles`
+- **編輯員工**：同頁 Dialog，修改姓名、電話、啟用狀態（不導向子路由）
 - 停用員工（`is_active: false`）不刪除資料，避免歷史排班紀錄損毀
 - **人數上限保護**：`create-staff` API Route 新增員工前先檢查 `is_active = true` 的員工數，超過 50 人則拒絕並回傳錯誤訊息
 
@@ -470,33 +479,37 @@ type SelectionState =
 ```ts
 // app/api/create-staff/route.ts
 // 使用 SUPABASE_SERVICE_ROLE_KEY（server only）
-// 1. supabaseAdmin.auth.admin.createUser({ email, email_confirm: true })
-// 2. insert into profiles(id, full_name, email, role)
-// 3. 回傳成功 / 錯誤
+// 1. 查 da_profiles is_active=true 員工數 → 超過 50 回 { error: 'STAFF_LIMIT' }
+// 2. supabaseAdmin.auth.admin.createUser({ email, email_confirm: true })
+// 3. insert into da_profiles(id, full_name, email, role='staff')
+// 4. 回傳 { id } 或 { error }
 ```
 
 ---
 
-### 6.4 班次設定（`/admin/settings`）
+### 6.4 班次設定（`/settings_admin`）
 
-- 顯示現有班次列表（名稱、時間、顏色）
-- 新增 / 編輯 / 刪除班次
-- 刪除前檢查是否有關聯的 `schedule_entries`，若有則阻止刪除並提示
+- 顯示現有班次列表（色塊 + 名稱 + 時間區間）
+- 新增 / 編輯 / 刪除班次，均在 Dialog 內完成
+- 顏色選擇：12 個預設色票（點選色塊，非 free-pick）
+- 刪除前檢查是否有關聯的 `da_schedule_entries`，若有則阻止刪除並提示
 
 ---
 
-### 6.5 節假日管理（`/admin/holidays`）
+### 6.5 節假日管理（`/holidays_admin`）
 
-- 顯示當年節假日列表，標示放假 / 補班
-- 手動新增單筆（處理政府 API 未涵蓋的特殊假日）
-- 同步按鈕：觸發 Supabase Edge Function 重新抓取政府 API
+- 顯示節假日列表（預設當年），下拉可切換年份
+- 手動新增單筆（Dialog：日期 + 名稱 + 放假/補班 radio）
+- **同步按鈕**：POST `/api/sync-holidays?year=YYYY` → 抓政府 API → upsert `da_holidays`；完成後 toast 顯示新增/更新筆數
 
-#### 節假日自動同步 Edge Function
+#### 節假日同步 API Route
 
-- 排程：每年 12 月 1 日 09:00 自動執行（`pg_cron`）
-- 來源：`data.gov.tw/dataset/14718`
-- 操作：`upsert`（`on conflict (date) do update`）
+- 路由：`app/api/sync-holidays/route.ts`（Next.js API Route，非 Edge Function）
+- 來源：`data.gov.tw/dataset/14718`（人事行政局行事曆）
+- 操作：`upsert`（`onConflict: 'date'`）
 - 格式轉換：`"20250101"` → `2025-01-01`，`"是"` → `true`
+
+> **決策紀錄**：Phase 2 選擇 Next.js API Route 替代 Supabase Edge Function，無需 Supabase CLI 部署，功能等價。自動排程（pg_cron）留待未來有需要時補充。
 
 ---
 
@@ -548,8 +561,8 @@ type SelectionState =
 | 元件 | 說明 |
 |------|------|
 | `AdminSidebar` | 左側導覽列（排班 / 員工 / 節假日 / 設定） |
-| `StaffForm` | 新增 / 編輯員工表單 |
-| `ShiftForm` | 新增 / 編輯班次表單（含顏色選擇器） |
+
+> **決策紀錄**：Phase 2 的表單元件（員工/班次/節假日）與各頁 Client Component 共存於同一目錄，不抽出獨立元件，因不跨頁複用。
 
 ---
 
@@ -585,9 +598,9 @@ LINE_NOTIFY_TOKEN=
 
 ### Phase 2 — 管理完善
 
-7. `/admin/staff` 員工管理（含新增 API Route）
-8. `/admin/settings` 班次設定
-9. `/admin/holidays` 節假日管理 + Edge Function 自動同步
+7. `/staff_admin` 員工管理（含 `/api/create-staff` API Route）
+8. `/settings_admin` 班次設定
+9. `/holidays_admin` 節假日管理 + `/api/sync-holidays` API Route
 
 ### Phase 3 — 通知系統（未來）
 
