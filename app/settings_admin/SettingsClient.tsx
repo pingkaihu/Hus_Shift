@@ -235,14 +235,46 @@ export default function SettingsClient({ initialShifts }: Props) {
         </table>
       </div>
 
-      <div className="mt-6 bg-zinc-50 rounded-xl border border-zinc-200 p-4 text-sm text-zinc-600">
-        <p className="font-medium text-zinc-800 mb-2">使用說明</p>
-        <ul className="space-y-1.5 list-disc list-inside">
-          <li>點擊右上角「新增班次」建立班次，設定名稱、時段與顏色。</li>
-          <li>點擊 <span className="inline-flex items-center gap-0.5 font-medium text-zinc-700">✏️ 編輯</span> 按鈕可修改現有班次資訊。</li>
-          <li>點擊 <span className="inline-flex items-center gap-0.5 font-medium text-zinc-700">🗑️ 刪除</span> 按鈕可刪除班次；若該班次已有排班紀錄則無法刪除。</li>
-          <li>班次顏色會顯示在月曆與公開行程頁面，建議每個班次選用不同顏色以利辨識。</li>
-        </ul>
+      <div className="mt-6 bg-zinc-50 rounded-xl border border-zinc-200 p-5 text-sm text-zinc-600">
+        <p className="font-semibold text-zinc-800 mb-4">操作說明</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <p className="font-medium text-zinc-700 mb-1.5">排班管理</p>
+            <ul className="space-y-1 list-disc list-inside">
+              <li>點擊日期格選取單日，再點其他日期可多選。</li>
+              <li>長按日期進入多選模式，批次選取後指派班次與員工。</li>
+              <li>點擊已排班員工名稱可快速刪除該筆排班。</li>
+              <li>右上角可切換員工篩選，只顯示特定人員的排班。</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-zinc-700 mb-1.5">員工管理</p>
+            <ul className="space-y-1 list-disc list-inside">
+              <li>點擊「新增員工」輸入姓名與 Email，系統自動建立帳號。</li>
+              <li>員工可使用 Email Magic Link 登入查看公開行程。</li>
+              <li>編輯員工時可修改姓名、電話，並切換帳號啟用狀態。</li>
+              <li>停用帳號後該員工仍保留歷史排班紀錄，不會出現在新排班選單中。</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-zinc-700 mb-1.5">節假日管理</p>
+            <ul className="space-y-1 list-disc list-inside">
+              <li>點擊「同步政府資料」可自動匯入台灣官方國定假日。</li>
+              <li>點擊「新增週末」可一次將全年週六、週日加入清單。</li>
+              <li>節假日會在排班月曆中以標示顯示，補班日亦同。</li>
+              <li>若官方假日有調整，重新同步即可覆蓋舊資料。</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-medium text-zinc-700 mb-1.5">班次設定（本頁）</p>
+            <ul className="space-y-1 list-disc list-inside">
+              <li>點擊「新增班次」建立班次，設定名稱、時段與顯示顏色。</li>
+              <li>點擊編輯圖示可修改現有班次資訊。</li>
+              <li>有排班紀錄的班次無法刪除，需先清除相關排班。</li>
+              <li>建議每個班次選用不同顏色，方便在月曆上快速辨識。</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       {isMobile ? (
