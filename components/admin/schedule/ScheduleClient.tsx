@@ -67,6 +67,26 @@ export default function ScheduleClient({
     })
   }
 
+  const handleDateLongPress = (date: string) => {
+    setSelection(prev => {
+      if (prev.mode === 'idle') {
+        return { mode: 'multi', dates: [date] }
+      }
+      if (prev.mode === 'single') {
+        const combined = prev.date === date ? [date] : [prev.date, date]
+        return { mode: 'multi', dates: combined }
+      }
+      if (prev.mode === 'multi') {
+        const next = prev.dates.includes(date)
+          ? prev.dates.filter(d => d !== date)
+          : [...prev.dates, date]
+        if (next.length === 0) return { mode: 'idle' }
+        return { mode: 'multi', dates: next }
+      }
+      return prev
+    })
+  }
+
   const handleClose = () => setSelection({ mode: 'idle' })
   const handleClear = () => setSelection({ mode: 'idle' })
 
@@ -214,6 +234,7 @@ export default function ScheduleClient({
           density={density}
           onDateClick={handleDateClick}
           onDelete={handleDelete}
+          onLongPress={handleDateLongPress}
         />
       </div>
 

@@ -17,6 +17,7 @@ interface Props {
   density: 'full' | 'compact'
   onDateClick: (date: string) => void
   onDelete: (entry: ScheduleEntry) => void
+  onLongPress: (date: string) => void
 }
 
 export default function MonthGrid({
@@ -30,6 +31,7 @@ export default function MonthGrid({
   density,
   onDateClick,
   onDelete,
+  onLongPress,
 }: Props) {
   const todayStr = format(new Date(), 'yyyy-MM-dd')
 
@@ -70,6 +72,7 @@ export default function MonthGrid({
               density={density}
               onClick={() => onDateClick(date)}
               onDelete={onDelete}
+              onLongPress={() => onLongPress(date)}
             />
           )
         })}

@@ -2,6 +2,7 @@
 
 import type { Shift, Profile, ScheduleEntry, Holiday, ScheduleMatrix } from '@/lib/types'
 import StaffChip from '@/components/admin/schedule/StaffChip'
+import { useLongPress } from '@/hooks/use-long-press'
 
 interface Props {
   date: string
@@ -16,6 +17,7 @@ interface Props {
   density: 'full' | 'compact'
   onClick: () => void
   onDelete: (entry: ScheduleEntry) => void
+  onLongPress?: () => void
 }
 
 export default function MonthDayCell({
@@ -31,7 +33,9 @@ export default function MonthDayCell({
   density,
   onClick,
   onDelete,
+  onLongPress,
 }: Props) {
+  const lp = useLongPress(onLongPress ?? (() => {}))
   const dayNumber = date.slice(8) // "DD" portion
 
   const isHoliday = holiday?.is_holiday === true
@@ -48,7 +52,11 @@ export default function MonthDayCell({
   return (
     <button
       type="button"
-      onClick={onClick}
+      {...lp.handlers}
+      onClick={() => {
+        if (lp.didLongPress()) return
+        onClick()
+      }}
       className={[
         'flex flex-col items-start p-1 w-full min-h-[90px] rounded-md border text-left',
         'transition-colors focus:outline-none',
