@@ -37,6 +37,7 @@ export type Holiday = {
   is_holiday: boolean  // true = day off, false = make-up workday
   description: string | null
   year: number
+  source: 'government' | 'weekend' | 'manual'
 }
 
 // Each cell holds all entries for (shift, date) — multiple staff per shift per day

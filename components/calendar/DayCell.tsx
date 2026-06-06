@@ -45,7 +45,7 @@ export default function DayCell({
       </span>
 
       {/* Holiday name */}
-      {holiday && (
+      {holiday && holiday.source !== 'weekend' && (
         <span
           className={`text-[9px] leading-none mb-0.5 truncate ${
             isHoliday ? 'text-[var(--danger)]' : 'text-[var(--warning)]'

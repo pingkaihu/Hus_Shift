@@ -60,6 +60,7 @@ export async function POST(request: Request) {
       date: `${r.date.slice(0, 4)}-${r.date.slice(4, 6)}-${r.date.slice(6, 8)}`,
       name: r.name.trim(),
       is_holiday: Boolean(r.isHoliday),
+      source: 'government',
       year,
       description: r.description?.trim() || null,
     }))

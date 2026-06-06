@@ -17,8 +17,10 @@ export default async function HolidaysAdminPage() {
       .select('year'),
   ])
 
+  const FIXED_YEARS = [2026, 2027, 2028, 2029, 2030]
   const yearSet = new Set(yearRows?.map(r => r.year as number) ?? [])
   yearSet.add(currentYear)
+  FIXED_YEARS.forEach(y => yearSet.add(y))
   const availableYears = [...yearSet].sort((a, b) => b - a)
 
   return (

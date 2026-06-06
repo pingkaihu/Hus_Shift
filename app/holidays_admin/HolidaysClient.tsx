@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Plus, RefreshCw } from 'lucide-react'
+import { CalendarDays, Plus, RefreshCw } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -29,6 +29,8 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
   const [dialogOpen, setDialogOpen] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [addingWeekends, setAddingWeekends] = useState(false)
+  const [filter, setFilter] = useState<'official' | 'all'>('official')
 
   const [date, setDate] = useState('')
   const [name, setName] = useState('')
@@ -65,7 +67,7 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
       const { data, error } = await supabase
         .from('da_holidays')
         .upsert(
-          { date, name: name.trim(), is_holiday: isHoliday, year: yearNum, description: null },
+          { date, name: name.trim(), is_holiday: isHoliday, year: yearNum, description: null, source: 'manual' },
           { onConflict: 'date' }
         )
         .select()
@@ -86,6 +88,19 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
     }
   }
 
+  const handleAddWeekends = async () => {
+    setAddingWeekends(true)
+    try {
+      const res = await fetch(`/api/add-weekends?year=${year}`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { toast.error(data.error ?? '新增週末失敗'); return }
+      toast.success(`已新增 ${data.inserted} 筆，跳過 ${data.skipped} 筆重複`)
+      await fetchYear(year)
+    } finally {
+      setAddingWeekends(false)
+    }
+  }
+
   const handleSync = async () => {
     setSyncing(true)
     try {
@@ -98,6 +113,8 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
       setSyncing(false)
     }
   }
+
+  const displayedHolidays = filter === 'official' ? holidays.filter(h => h.source !== 'weekend') : holidays
 
   return (
     <div className="p-6">
@@ -116,6 +133,10 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
           </Select>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleAddWeekends} disabled={addingWeekends}>
+            <CalendarDays className="h-4 w-4 mr-1" />
+            {addingWeekends ? '新增中...' : '新增週末'}
+          </Button>
           <Button variant="outline" size="sm" onClick={handleSync} disabled={syncing}>
             <RefreshCw className={`h-4 w-4 mr-1 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? '同步中...' : '同步政府資料'}
@@ -125,6 +146,29 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
             手動新增
           </Button>
         </div>
+      </div>
+
+      <div className="flex gap-1 mb-4 border-b border-zinc-200">
+        <button
+          onClick={() => setFilter('official')}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            filter === 'official'
+              ? 'border-zinc-900 text-zinc-900'
+              : 'border-transparent text-zinc-500 hover:text-zinc-700'
+          }`}
+        >
+          節日
+        </button>
+        <button
+          onClick={() => setFilter('all')}
+          className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            filter === 'all'
+              ? 'border-zinc-900 text-zinc-900'
+              : 'border-transparent text-zinc-500 hover:text-zinc-700'
+          }`}
+        >
+          全部
+        </button>
       </div>
 
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
@@ -137,7 +181,7 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
             </tr>
           </thead>
           <tbody>
-            {holidays.map(h => (
+            {displayedHolidays.map(h => (
               <tr key={h.date} className="border-b border-zinc-50 last:border-0 hover:bg-zinc-50">
                 <td className="px-4 py-3 font-medium text-zinc-900">{h.date}</td>
                 <td className="px-4 py-3 text-zinc-700">{h.name}</td>
@@ -148,7 +192,7 @@ export default function HolidaysClient({ initialHolidays, initialYear, available
                 </td>
               </tr>
             ))}
-            {holidays.length === 0 && (
+            {displayedHolidays.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-4 py-8 text-center text-zinc-400 text-sm">
                   本年尚無節假日資料，可點擊「同步政府資料」匯入

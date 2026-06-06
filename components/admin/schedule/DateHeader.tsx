@@ -40,13 +40,17 @@ export default function DateHeader({
       <div className="flex items-center gap-1.5">
         <span
           className={`text-sm font-semibold w-6 h-6 flex items-center justify-center rounded-full ${
-            today ? 'bg-indigo-500 text-white' : 'text-zinc-700'
+            today
+              ? 'bg-indigo-500 text-white'
+              : holiday?.is_holiday
+              ? 'text-red-500'
+              : 'text-zinc-700'
           }`}
         >
           {format(d, 'd')}
         </span>
         <span className="text-xs text-zinc-500">({dayLabel})</span>
-        {holiday && (
+        {holiday && holiday.source !== 'weekend' && (
           <span
             className={`text-xs truncate max-w-[60px] ${
               holiday.is_holiday ? 'text-red-500' : 'text-amber-600'
