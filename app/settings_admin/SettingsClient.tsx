@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { Shift } from '@/lib/types'
+import { Drawer } from 'vaul'
+import { useIsMobile } from '@/hooks/use-is-mobile'
 
 const PRESET_COLORS = [
   '#4F81BD', '#70AD47', '#ED7D31', '#FF0000', '#FFC000',
@@ -22,11 +24,80 @@ interface Props {
   initialShifts: Shift[]
 }
 
+const INPUT_CLASS = 'h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+
+function ShiftFormBody({
+  name, setName,
+  startTime, setStartTime,
+  endTime, setEndTime,
+  color, setColor,
+}: {
+  name: string; setName: (v: string) => void
+  startTime: string; setStartTime: (v: string) => void
+  endTime: string; setEndTime: (v: string) => void
+  color: string; setColor: (v: string) => void
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="shift-name">名稱</Label>
+        <input
+          id="shift-name"
+          className={INPUT_CLASS}
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="早班"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="shift-start">開始時間</Label>
+          <input
+            id="shift-start"
+            type="time"
+            className={INPUT_CLASS}
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="shift-end">結束時間</Label>
+          <input
+            id="shift-end"
+            type="time"
+            className={INPUT_CLASS}
+            value={endTime}
+            onChange={e => setEndTime(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>顏色</Label>
+        <div className="flex flex-wrap gap-2">
+          {PRESET_COLORS.map(c => (
+            <button
+              key={c}
+              type="button"
+              className={cn(
+                'w-6 h-6 rounded-full border-2 transition-transform hover:scale-110',
+                color === c ? 'border-zinc-900 scale-110' : 'border-transparent'
+              )}
+              style={{ backgroundColor: c }}
+              onClick={() => setColor(c)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function SettingsClient({ initialShifts }: Props) {
   const supabase = createClient()
   const [shifts, setShifts] = useState<Shift[]>(initialShifts)
   const [dialog, setDialog] = useState<{ mode: 'add' } | { mode: 'edit'; shift: Shift } | null>(null)
   const [loading, setLoading] = useState(false)
+  const isMobile = useIsMobile()
 
   const [name, setName] = useState('')
   const [startTime, setStartTime] = useState('09:00')
@@ -120,7 +191,7 @@ export default function SettingsClient({ initialShifts }: Props) {
             <tr className="border-b border-zinc-100 text-zinc-500 text-xs">
               <th className="px-4 py-3 text-left font-medium">顏色</th>
               <th className="px-4 py-3 text-left font-medium">名稱</th>
-              <th className="px-4 py-3 text-left font-medium">時間</th>
+              <th className="px-4 py-3 text-left font-medium hidden md:table-cell">時間</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -134,7 +205,7 @@ export default function SettingsClient({ initialShifts }: Props) {
                   />
                 </td>
                 <td className="px-4 py-3 font-medium text-zinc-900">{shift.name}</td>
-                <td className="px-4 py-3 text-zinc-500">
+                <td className="px-4 py-3 text-zinc-500 hidden md:table-cell">
                   {shift.start_time.slice(0, 5)}–{shift.end_time.slice(0, 5)}
                 </td>
                 <td className="px-4 py-3">
@@ -164,73 +235,60 @@ export default function SettingsClient({ initialShifts }: Props) {
         </table>
       </div>
 
-      <Dialog open={dialog !== null} onOpenChange={open => !open && setDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{dialog?.mode === 'add' ? '新增班次' : '編輯班次'}</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="shift-name">名稱</Label>
-              <input
-                id="shift-name"
-                className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="早班"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="shift-start">開始時間</Label>
-                <input
-                  id="shift-start"
-                  type="time"
-                  className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                  value={startTime}
-                  onChange={e => setStartTime(e.target.value)}
+      {isMobile ? (
+        <Drawer.Root open={dialog !== null} onOpenChange={(o) => !o && setDialog(null)}>
+          <Drawer.Portal>
+            <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+            <Drawer.Content className="bg-white flex flex-col rounded-t-2xl fixed bottom-0 left-0 right-0 z-50 max-h-[90dvh] outline-none">
+              <div className="mx-auto mt-3 mb-2 w-12 h-1.5 rounded-full bg-zinc-300 flex-shrink-0" />
+              <div className="overflow-y-auto flex-1 px-5 pb-8">
+                <p className="text-base font-semibold text-zinc-900 mb-4">
+                  {dialog?.mode === 'add' ? '新增班次' : '編輯班次'}
+                </p>
+                <ShiftFormBody
+                  name={name} setName={setName}
+                  startTime={startTime} setStartTime={setStartTime}
+                  endTime={endTime} setEndTime={setEndTime}
+                  color={color} setColor={setColor}
                 />
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    className="flex-1"
+                    onClick={dialog?.mode === 'add' ? handleAdd : handleEdit}
+                    disabled={loading || !name.trim()}
+                  >
+                    {loading ? '儲存中...' : '儲存'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
+                </div>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="shift-end">結束時間</Label>
-                <input
-                  id="shift-end"
-                  type="time"
-                  className="h-8 rounded-lg border border-input bg-transparent px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                  value={endTime}
-                  onChange={e => setEndTime(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label>顏色</Label>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_COLORS.map(c => (
-                  <button
-                    key={c}
-                    type="button"
-                    className={cn(
-                      'w-6 h-6 rounded-full border-2 transition-transform hover:scale-110',
-                      color === c ? 'border-zinc-900 scale-110' : 'border-transparent'
-                    )}
-                    style={{ backgroundColor: c }}
-                    onClick={() => setColor(c)}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
-            <Button
-              onClick={dialog?.mode === 'add' ? handleAdd : handleEdit}
-              disabled={loading || !name.trim()}
-            >
-              {loading ? '儲存中...' : '儲存'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </Drawer.Content>
+          </Drawer.Portal>
+        </Drawer.Root>
+      ) : (
+        <Dialog open={dialog !== null} onOpenChange={open => !open && setDialog(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{dialog?.mode === 'add' ? '新增班次' : '編輯班次'}</DialogTitle>
+            </DialogHeader>
+            <ShiftFormBody
+              name={name} setName={setName}
+              startTime={startTime} setStartTime={setStartTime}
+              endTime={endTime} setEndTime={setEndTime}
+              color={color} setColor={setColor}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialog(null)}>取消</Button>
+              <Button
+                onClick={dialog?.mode === 'add' ? handleAdd : handleEdit}
+                disabled={loading || !name.trim()}
+              >
+                {loading ? '儲存中...' : '儲存'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
