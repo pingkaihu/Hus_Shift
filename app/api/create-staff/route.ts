@@ -14,11 +14,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = await request.json()
-  const full_name: string = (body.full_name ?? '').trim()
-  const email: string = (body.email ?? '').trim()
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+  const full_name: string = ((body.full_name as string) ?? '').trim()
+  const email: string = ((body.email as string) ?? '').trim()
   if (!full_name || !email) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
   }
 
   // Check 50-person limit (active staff only)
@@ -46,7 +55,10 @@ export async function POST(request: Request) {
 
   if (profileError) {
     // Rollback: remove the auth user we just created
-    await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+    if (deleteError) {
+      console.error('Rollback failed — orphaned auth user:', authData.user.id, deleteError.message)
+    }
     return NextResponse.json({ error: profileError.message }, { status: 400 })
   }
 
