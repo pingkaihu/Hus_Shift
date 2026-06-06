@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { parseISO } from 'date-fns'
 import type { Shift, Holiday } from '@/lib/types'
 import PageHeader from './PageHeader'
@@ -9,6 +9,7 @@ import CalendarGrid from './CalendarGrid'
 import DayDetailSheet from './DayDetailSheet'
 import ShiftLegend from './ShiftLegend'
 import EmptyMonth from './EmptyMonth'
+import StaffFilterBar from './StaffFilterBar'
 
 interface EntryWithName {
   profile_id: string
@@ -19,11 +20,11 @@ interface EntryWithName {
 
 interface Props {
   month: string
-  monthDate: string     // ISO string — passed from server to avoid client-side date creation
+  monthDate: string
   entries: EntryWithName[]
   shifts: Shift[]
   holidays: Holiday[]
-  today: string         // "YYYY-MM-DD" in Asia/Taipei — computed server-side
+  today: string
 }
 
 export default function CalendarView({
@@ -31,6 +32,26 @@ export default function CalendarView({
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedEntries, setSelectedEntries] = useState<EntryWithName[]>([])
+  const [filteredProfileId, setFilteredProfileId] = useState<string | null>(null)
+
+  const staffList = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const e of entries) {
+      if (e.profiles && !seen.has(e.profile_id)) {
+        seen.set(e.profile_id, e.profiles.full_name)
+      }
+    }
+    return [...seen.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'))
+  }, [entries])
+
+  const filteredEntries = useMemo(
+    () => filteredProfileId
+      ? entries.filter(e => e.profile_id === filteredProfileId)
+      : entries,
+    [entries, filteredProfileId]
+  )
 
   function handleDayClick(date: string, dayEntries: EntryWithName[]) {
     setSelectedDate(date)
@@ -41,15 +62,20 @@ export default function CalendarView({
     <div className="min-h-screen bg-[var(--neutral-50)]">
       <PageHeader />
       <MonthNavigator month={month} monthDate={monthDate} />
+      <StaffFilterBar
+        staff={staffList}
+        value={filteredProfileId}
+        onChange={setFilteredProfileId}
+      />
       <CalendarGrid
         monthDate={parseISO(monthDate)}
-        entries={entries}
+        entries={filteredEntries}
         shifts={shifts}
         holidays={holidays}
         today={today}
         onDayClick={handleDayClick}
       />
-      {entries.length === 0 && <EmptyMonth />}
+      {filteredEntries.length === 0 && <EmptyMonth />}
       <ShiftLegend shifts={shifts} />
       <DayDetailSheet
         open={selectedDate !== null}
