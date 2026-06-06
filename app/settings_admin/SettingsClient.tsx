@@ -235,6 +235,16 @@ export default function SettingsClient({ initialShifts }: Props) {
         </table>
       </div>
 
+      <div className="mt-6 bg-zinc-50 rounded-xl border border-zinc-200 p-4 text-sm text-zinc-600">
+        <p className="font-medium text-zinc-800 mb-2">使用說明</p>
+        <ul className="space-y-1.5 list-disc list-inside">
+          <li>點擊右上角「新增班次」建立班次，設定名稱、時段與顏色。</li>
+          <li>點擊 <span className="inline-flex items-center gap-0.5 font-medium text-zinc-700">✏️ 編輯</span> 按鈕可修改現有班次資訊。</li>
+          <li>點擊 <span className="inline-flex items-center gap-0.5 font-medium text-zinc-700">🗑️ 刪除</span> 按鈕可刪除班次；若該班次已有排班紀錄則無法刪除。</li>
+          <li>班次顏色會顯示在月曆與公開行程頁面，建議每個班次選用不同顏色以利辨識。</li>
+        </ul>
+      </div>
+
       {isMobile ? (
         <Drawer.Root open={dialog !== null} onOpenChange={(o) => !o && setDialog(null)}>
           <Drawer.Portal>
