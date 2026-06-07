@@ -73,7 +73,10 @@ export default function ScheduleClient({
     })
   }
 
-  // Dismiss BulkPanel (e.g., swipe drawer down) without fully exiting selecting mode
+  const handleDayModalClose = () => setSelection({ mode: 'idle' })
+
+  // Swiping down BulkPanel clears dates (closes panel) but stays in selecting mode,
+  // so the user can re-pick dates without tapping 取消 first.
   const handleClose = () => {
     setSelection(prev => {
       if (prev.mode === 'selecting') return { mode: 'selecting', dates: [] }
@@ -268,7 +271,7 @@ export default function ScheduleClient({
         matrix={matrix}
         onInsert={handleInsert}
         onDelete={handleDelete}
-        onClose={handleClose}
+        onClose={handleDayModalClose}
       />
 
       <BulkPanel
