@@ -15,9 +15,9 @@ interface Props {
   selection: SelectionState
   filteredProfileId: string | null
   density: 'full' | 'compact'
+  isSelectingMode: boolean
   onDateClick: (date: string) => void
   onDelete: (entry: ScheduleEntry) => void
-  onLongPress: (date: string) => void
 }
 
 export default function MonthGrid({
@@ -29,9 +29,9 @@ export default function MonthGrid({
   selection,
   filteredProfileId,
   density,
+  isSelectingMode,
   onDateClick,
   onDelete,
-  onLongPress,
 }: Props) {
   const todayStr = format(new Date(), 'yyyy-MM-dd')
 
@@ -53,7 +53,8 @@ export default function MonthGrid({
 
           const isSelected =
             (selection.mode === 'single' && selection.date === date) ||
-            (selection.mode === 'multi' && selection.dates.includes(date))
+            (selection.mode === 'multi' && selection.dates.includes(date)) ||
+            (selection.mode === 'selecting' && selection.dates.includes(date))
 
           const isToday = date === todayStr
 
@@ -68,11 +69,11 @@ export default function MonthGrid({
               matrix={matrix}
               profiles={profiles}
               isSelected={isSelected}
+              isSelectingMode={isSelectingMode}
               filteredProfileId={filteredProfileId}
               density={density}
               onClick={() => onDateClick(date)}
               onDelete={onDelete}
-              onLongPress={() => onLongPress(date)}
             />
           )
         })}
