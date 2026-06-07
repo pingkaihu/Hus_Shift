@@ -52,3 +52,4 @@ export type SelectionState =
   | { mode: 'single'; date: string }
   | { mode: 'dragging'; dates: string[] }
   | { mode: 'multi'; dates: string[] }
+  | { mode: 'selecting'; dates: string[] }
