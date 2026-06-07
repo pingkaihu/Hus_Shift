@@ -43,11 +43,6 @@ export default function ShiftSelector({
     return null
   }
 
-  function isDisabled(profileId: string): boolean {
-    if (!isModeA) return false
-    return existingShiftOnDate(profileId, singleDate) !== null
-  }
-
   function conflictShiftsOnDates(profileId: string): { date: string; shiftName: string }[] {
     return selectedDates.flatMap(date => {
       const shift = existingShiftOnDate(profileId, date)
@@ -58,9 +53,12 @@ export default function ShiftSelector({
   async function handleConfirm() {
     if (!selectedShiftId || selectedProfileIds.size === 0) return
     setLoading(true)
-    await onConfirm(selectedShiftId, Array.from(selectedProfileIds))
-    setLoading(false)
-    setSelectedProfileIds(new Set())
+    try {
+      await onConfirm(selectedShiftId, Array.from(selectedProfileIds))
+      setSelectedProfileIds(new Set())
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
