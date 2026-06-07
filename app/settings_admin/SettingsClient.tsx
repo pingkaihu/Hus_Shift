@@ -249,7 +249,7 @@ export default function SettingsClient({ initialShifts }: Props) {
             <p className="font-medium text-zinc-700 mb-1.5">排班管理</p>
             <ul className="space-y-1 list-disc list-inside">
               <li>點擊日期格選取單日，再點其他日期可多選。</li>
-              <li>長按日期進入多選模式，批次選取後指派班次與員工。</li>
+              <li>點選右上角「選取」後點擊日期，可批次選取多日指派班次與員工。</li>
               <li>點擊已排班員工名稱可快速刪除該筆排班。</li>
               <li>右上角可切換員工篩選，只顯示特定人員的排班。</li>
             </ul>
