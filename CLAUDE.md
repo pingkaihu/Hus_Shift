@@ -50,7 +50,7 @@ lib/supabase/admin.ts     # API Routes only — uses SUPABASE_SERVICE_ROLE_KEY
 
 ### Database Schema
 
-Four tables: `da_profiles` (extends auth.users), `da_shifts` (static shift definitions with color), `da_schedule_entries` (profile_id + shift_id + work_date, unique constraint), `da_holidays` (Taiwan official holidays, synced via Edge Function).  
+Four tables: `da_profiles` (extends auth.users), `da_shifts` (static shift definitions with color), `da_schedule_entries` (profile_id + shift_id + work_date; unique on (profile_id, work_date) — one shift per person per day), `da_holidays` (Taiwan official holidays, synced via Edge Function).  
 One view: `da_public_profiles` — always use this for guest-facing staff name queries.
 
 RLS is enabled on all tables. Helper function `is_admin()` checks `da_profiles.role = 'admin'`. All tables: anon can SELECT, only admin can INSERT/UPDATE/DELETE.
