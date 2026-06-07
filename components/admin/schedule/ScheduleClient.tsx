@@ -63,32 +63,28 @@ export default function ScheduleClient({
         if (next.length === 1) return { mode: 'single', date: next[0] }
         return { mode: 'multi', dates: next }
       }
-      return prev
-    })
-  }
-
-  const handleDateLongPress = (date: string) => {
-    setSelection(prev => {
-      if (prev.mode === 'idle') {
-        return { mode: 'multi', dates: [date] }
-      }
-      if (prev.mode === 'single') {
-        const combined = prev.date === date ? [date] : [prev.date, date]
-        return { mode: 'multi', dates: combined }
-      }
-      if (prev.mode === 'multi') {
+      if (prev.mode === 'selecting') {
         const next = prev.dates.includes(date)
           ? prev.dates.filter(d => d !== date)
           : [...prev.dates, date]
-        if (next.length === 0) return { mode: 'idle' }
-        return { mode: 'multi', dates: next }
+        return { mode: 'selecting', dates: next }
       }
       return prev
     })
   }
 
-  const handleClose = () => setSelection({ mode: 'idle' })
+  // Dismiss BulkPanel (e.g., swipe drawer down) without fully exiting selecting mode
+  const handleClose = () => {
+    setSelection(prev => {
+      if (prev.mode === 'selecting') return { mode: 'selecting', dates: [] }
+      return { mode: 'idle' }
+    })
+  }
+  // Exit selecting mode entirely
   const handleClear = () => setSelection({ mode: 'idle' })
+
+  const handleEnterSelectMode = () => setSelection({ mode: 'selecting', dates: [] })
+  const handleCancelSelectMode = () => setSelection({ mode: 'idle' })
 
   // Insert entries for (shiftId, profileIds[], dates[]), skipping conflicts
   const handleInsert = async (
@@ -224,6 +220,14 @@ export default function ScheduleClient({
               </button>
               <StaffFilter profiles={profiles} value={filteredProfileId} onChange={setFilteredProfileId} />
             </div>
+            {/* Mobile: 選取 / 取消 toggle */}
+            <button
+              type="button"
+              className="md:hidden text-sm font-medium text-[var(--accent-600)] px-2 py-1 rounded-lg hover:bg-[var(--accent-50)] transition-colors"
+              onClick={selection.mode === 'selecting' ? handleCancelSelectMode : handleEnterSelectMode}
+            >
+              {selection.mode === 'selecting' ? '取消' : '選取'}
+            </button>
           </div>
           {/* Row 2: mobile-only controls */}
           <div className="flex items-center justify-between md:hidden">
@@ -248,11 +252,11 @@ export default function ScheduleClient({
           matrix={matrix}
           holidays={holidays}
           selection={selection}
+          isSelectingMode={selection.mode === 'selecting'}
           filteredProfileId={filteredProfileId}
           density={density}
           onDateClick={handleDateClick}
           onDelete={handleDelete}
-          onLongPress={handleDateLongPress}
         />
       </div>
 
@@ -268,8 +272,15 @@ export default function ScheduleClient({
       />
 
       <BulkPanel
-        open={selection.mode === 'multi'}
-        dates={selection.mode === 'multi' ? selection.dates : []}
+        open={
+          selection.mode === 'multi' ||
+          (selection.mode === 'selecting' && selection.dates.length > 0)
+        }
+        dates={
+          selection.mode === 'multi' || selection.mode === 'selecting'
+            ? selection.dates
+            : []
+        }
         shifts={shifts}
         profiles={profiles}
         matrix={matrix}
