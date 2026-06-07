@@ -40,6 +40,7 @@ export default function ScheduleClient({
     buildMatrix(shifts, calendarDates.map(d => d.date), initialEntries)
   )
   const [selection, setSelection] = useState<SelectionState>({ mode: 'idle' })
+  const [bulkPanelOpen, setBulkPanelOpen] = useState(false)
   const [filteredProfileId, setFilteredProfileId] = useState<string | null>(null)
   const [density, setDensity] = useState<'full' | 'compact'>(() => {
     if (typeof window === 'undefined') return 'compact'
@@ -78,16 +79,24 @@ export default function ScheduleClient({
   // Swiping down BulkPanel clears dates (closes panel) but stays in selecting mode,
   // so the user can re-pick dates without tapping 取消 first.
   const handleClose = () => {
+    setBulkPanelOpen(false)
     setSelection(prev => {
       if (prev.mode === 'selecting') return { mode: 'selecting', dates: [] }
       return { mode: 'idle' }
     })
   }
   // Exit selecting mode entirely
-  const handleClear = () => setSelection({ mode: 'idle' })
+  const handleClear = () => {
+    setBulkPanelOpen(false)
+    setSelection({ mode: 'idle' })
+  }
 
   const handleEnterSelectMode = () => setSelection({ mode: 'selecting', dates: [] })
-  const handleCancelSelectMode = () => setSelection({ mode: 'idle' })
+  const handleCancelSelectMode = () => {
+    setBulkPanelOpen(false)
+    setSelection({ mode: 'idle' })
+  }
+  const handleConfirmSelection = () => setBulkPanelOpen(true)
 
   // Insert entries for (shiftId, profileIds[], dates[]), skipping conflicts
   const handleInsert = async (
@@ -274,11 +283,20 @@ export default function ScheduleClient({
         onClose={handleDayModalClose}
       />
 
+      {selection.mode === 'selecting' && selection.dates.length > 0 && !bulkPanelOpen && (
+        <div className="md:hidden fixed bottom-0 inset-x-0 p-4 bg-white border-t border-zinc-200 z-30">
+          <button
+            type="button"
+            onClick={handleConfirmSelection}
+            className="w-full py-3 bg-[var(--accent-500)] text-white text-sm font-medium rounded-xl active:opacity-80 transition-opacity"
+          >
+            確認選取（{selection.dates.length} 天）
+          </button>
+        </div>
+      )}
+
       <BulkPanel
-        open={
-          selection.mode === 'multi' ||
-          (selection.mode === 'selecting' && selection.dates.length > 0)
-        }
+        open={selection.mode === 'multi' || bulkPanelOpen}
         dates={
           selection.mode === 'multi' || selection.mode === 'selecting'
             ? selection.dates
