@@ -70,7 +70,7 @@ export default function BulkPanel({
 
   if (isMobile) {
     return (
-      <Drawer.Root open={open} onOpenChange={(o) => !o && onClear()}>
+      <Drawer.Root open={open} onOpenChange={(o) => !o && onClose()}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
           <Drawer.Content className="bg-white flex flex-col rounded-t-2xl fixed bottom-0 left-0 right-0 z-50 max-h-[90dvh] outline-none">
