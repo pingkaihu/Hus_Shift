@@ -284,7 +284,10 @@ export default function ScheduleClient({
       />
 
       {selection.mode === 'selecting' && selection.dates.length > 0 && !bulkPanelOpen && (
-        <div className="md:hidden fixed bottom-0 inset-x-0 p-4 bg-white border-t border-zinc-200 z-30">
+        <div
+          className="md:hidden fixed bottom-0 inset-x-0 px-4 pt-3 bg-white border-t border-zinc-200 z-[60]"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
+        >
           <button
             type="button"
             onClick={handleConfirmSelection}
