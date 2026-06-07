@@ -11,20 +11,20 @@
 
 ### 1.1 Accent（品牌主色）
 
-靛藍系列，貫穿按鈕、focus ring、今日高亮、active 狀態。
+暖橘棕系列，貫穿按鈕、focus ring、今日高亮、active 狀態。
 
 | Token | Hex | Tailwind | 用途 |
 |-------|-----|----------|------|
-| `accent-50` | `#eef2ff` | `indigo-50` | 淡底色、hover 背景 |
-| `accent-100` | `#e0e7ff` | `indigo-100` | 選取狀態底色 |
-| `accent-200` | `#c7d2fe` | `indigo-200` | 邊框 hover 色 |
-| `accent-500` | `#6366f1` | `indigo-500` | **主要 Accent** — 按鈕、今日圓圈 |
-| `accent-600` | `#4f46e5` | `indigo-600` | 按鈕 hover / pressed |
-| `accent-700` | `#4338ca` | `indigo-700` | 深色強調（少用） |
+| `accent-50` | `#FFF4F0` | `—` | 淡底色、hover 背景 |
+| `accent-100` | `#FDDED3` | `—` | 選取狀態底色 |
+| `accent-200` | `#F8BEAA` | `—` | 邊框 hover 色 |
+| `accent-500` | `#D97757` | `—` | **主要 Accent** — 按鈕、今日圓圈 |
+| `accent-600` | `#D2562D` | `—` | 按鈕 hover / pressed |
+| `accent-700` | `#A84524` | `—` | 深色強調（少用） |
 
 ### 1.2 Neutral（中性色）
 
-暖灰系列（帶微微黃調，與 accent 靛藍形成溫暖對比）。
+暖灰系列（帶微微黃調，與 accent 橘棕形成層次對比）。
 
 | Token | Hex | Tailwind | 用途 |
 |-------|-----|----------|------|
@@ -117,8 +117,8 @@
 |-------|-------|------|
 | `shadow-card` | `0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)` | 一般卡片 |
 | `shadow-modal` | `0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)` | Modal、Sheet |
-| `shadow-hover` | `0 4px 12px rgba(99,102,241,0.15)` | 卡片 hover（accent 色投影） |
-| `shadow-focus` | `0 0 0 3px rgba(99,102,241,0.25)` | Focus ring（無障礙） |
+| `shadow-hover` | `0 4px 12px rgba(217,119,87,0.15)` | 卡片 hover（accent 色投影） |
+| `shadow-focus` | `0 0 0 3px rgba(217,119,87,0.25)` | Focus ring（無障礙） |
 
 ---
 
@@ -216,12 +216,12 @@ Hover 背景：neutral-50
 ```css
 :root {
   /* Accent */
-  --accent-50:  #eef2ff;
-  --accent-100: #e0e7ff;
-  --accent-200: #c7d2fe;
-  --accent-500: #6366f1;
-  --accent-600: #4f46e5;
-  --accent-700: #4338ca;
+  --accent-50:  #FFF4F0;
+  --accent-100: #FDDED3;
+  --accent-200: #F8BEAA;
+  --accent-500: #D97757;
+  --accent-600: #D2562D;
+  --accent-700: #A84524;
 
   /* Neutral (warm gray) */
   --neutral-0:   #ffffff;
@@ -249,8 +249,8 @@ Hover 背景：neutral-50
   /* Shadow */
   --shadow-card:  0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-modal: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-  --shadow-hover: 0 4px 12px rgba(99,102,241,0.15);
-  --shadow-focus: 0 0 0 3px rgba(99,102,241,0.25);
+  --shadow-hover: 0 4px 12px rgba(217,119,87,0.15);
+  --shadow-focus: 0 0 0 3px rgba(217,119,87,0.25);
 }
 ```
 
@@ -285,7 +285,7 @@ Hover 背景：neutral-50
 
 ### 共用
 
-Accent color（`accent-500` `#6366f1`）在兩個介面都使用，作為跨介面的品牌識別錨點。
+Accent color（`accent-500` `#D97757`）在兩個介面都使用，作為跨介面的品牌識別錨點。
 
 ---
 
