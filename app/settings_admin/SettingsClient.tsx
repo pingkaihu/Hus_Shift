@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, LogOut } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -94,6 +95,7 @@ function ShiftFormBody({
 
 export default function SettingsClient({ initialShifts }: Props) {
   const supabase = createClient()
+  const router = useRouter()
   const [shifts, setShifts] = useState<Shift[]>(initialShifts)
   const [dialog, setDialog] = useState<{ mode: 'add' } | { mode: 'edit'; shift: Shift } | null>(null)
   const [loading, setLoading] = useState(false)
@@ -157,6 +159,11 @@ export default function SettingsClient({ initialShifts }: Props) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
   }
 
   const handleDelete = async (shift: Shift) => {
@@ -275,6 +282,19 @@ export default function SettingsClient({ initialShifts }: Props) {
             </ul>
           </div>
         </div>
+      </div>
+
+      <div className="mt-6 bg-white rounded-xl border border-zinc-200 p-5">
+        <p className="font-semibold text-zinc-800 mb-4 text-sm">帳號</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4 mr-1.5" />
+          登出
+        </Button>
       </div>
 
       {isMobile ? (
