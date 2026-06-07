@@ -21,9 +21,9 @@ export default function DateHeader({
   const ratio = totalShifts > 0 ? entries.length / totalShifts : 0
   const heatClass =
     ratio === 0 ? '' :
-    ratio <= 1/3 ? 'bg-indigo-100' :
-    ratio <= 2/3 ? 'bg-indigo-200' :
-    'bg-indigo-300'
+    ratio <= 1/3 ? 'bg-[var(--accent-100)]' :
+    ratio <= 2/3 ? 'bg-[var(--accent-200)]' :
+    'bg-[var(--accent-500)]/30'
 
   const dayLabel = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]
 
@@ -32,16 +32,16 @@ export default function DateHeader({
       type="button"
       onClick={onClick}
       className={[
-        'p-3 border-b border-l border-zinc-200 text-left transition-colors hover:bg-indigo-50',
+        'p-3 border-b border-l border-zinc-200 text-left transition-colors hover:bg-[var(--accent-50)]',
         heatClass,
-        isSelected ? 'ring-2 ring-indigo-400 ring-inset' : '',
+        isSelected ? 'ring-2 ring-[var(--accent-500)] ring-inset' : '',
       ].join(' ')}
     >
       <div className="flex items-center gap-1.5">
         <span
           className={`text-sm font-semibold w-6 h-6 flex items-center justify-center rounded-full ${
             today
-              ? 'bg-indigo-500 text-white'
+              ? 'bg-[var(--accent-500)] text-white'
               : holiday?.is_holiday
               ? 'text-red-500'
               : 'text-zinc-700'

@@ -28,7 +28,7 @@ export default function MobileBottomNav() {
               href={href}
               className={cn(
                 'flex flex-1 flex-col items-center py-2 gap-1 text-xs',
-                active ? 'text-indigo-600' : 'text-zinc-400'
+                active ? 'text-[var(--accent-600)]' : 'text-zinc-400'
               )}
             >
               <Icon size={22} />

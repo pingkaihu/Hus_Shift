@@ -89,7 +89,7 @@ export default function ShiftSelector({
           {profiles.length === 0 ? (
             <p className="text-sm text-zinc-400">
               尚未新增員工。{' '}
-              <a href="/staff_admin" className="text-indigo-500 hover:underline">前往新增</a>
+              <a href="/staff_admin" className="text-[var(--accent-500)] hover:underline">前往新增</a>
             </p>
           ) : (
             <div className="flex flex-col gap-2">
@@ -132,7 +132,7 @@ export default function ShiftSelector({
         <Button
           onClick={handleConfirm}
           disabled={loading || selectedProfileIds.size === 0}
-          className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-full flex-1"
+          className="bg-[var(--accent-500)] hover:bg-[var(--accent-600)] text-white rounded-full flex-1"
         >
           {loading ? '新增中...' : '確認新增'}
         </Button>

@@ -33,7 +33,7 @@ export default function MonthPicker({ monthParam, label }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
-        className="text-sm font-semibold text-zinc-800 min-w-[120px] text-center hover:text-indigo-600 transition-colors"
+        className="text-sm font-semibold text-zinc-800 min-w-[120px] text-center hover:text-[var(--accent-600)] transition-colors"
       >
         {label}
       </DialogTrigger>
@@ -71,7 +71,7 @@ export default function MonthPicker({ monthParam, label }: Props) {
                 className={cn(
                   'py-2 rounded-md text-sm transition-colors',
                   isActive
-                    ? 'bg-indigo-500 text-white'
+                    ? 'bg-[var(--accent-500)] text-white'
                     : 'hover:bg-zinc-100 text-zinc-700'
                 )}
               >

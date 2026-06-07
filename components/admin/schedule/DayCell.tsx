@@ -27,7 +27,7 @@ export default function DayCell({
       className={[
         'p-2 border-b border-l border-zinc-200 min-h-[72px] flex flex-wrap gap-1 content-start',
         'cursor-grab select-none touch-none transition-colors',
-        isSelected ? 'bg-indigo-50 ring-2 ring-indigo-300 ring-inset' : 'hover:bg-zinc-50',
+        isSelected ? 'bg-[var(--accent-50)] ring-2 ring-[var(--accent-200)] ring-inset' : 'hover:bg-zinc-50',
       ].join(' ')}
     >
       {entries.map(entry => {

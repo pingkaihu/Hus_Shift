@@ -61,7 +61,7 @@ export default function MonthDayCell({
         'flex flex-col items-start p-1 w-full min-h-[90px] rounded-md border text-left',
         'transition-colors focus:outline-none',
         isSelected
-          ? 'ring-2 ring-indigo-500 border-indigo-300 bg-indigo-50'
+          ? 'ring-2 ring-[var(--accent-500)] border-[var(--accent-200)] bg-[var(--accent-50)]'
           : 'border-zinc-200 bg-white hover:bg-zinc-50',
         !isCurrentMonth ? 'opacity-40' : '',
       ]
@@ -74,7 +74,7 @@ export default function MonthDayCell({
           className={[
             'w-5 h-5 flex items-center justify-center rounded-full text-xs font-semibold',
             isToday
-              ? 'bg-indigo-500 text-white'
+              ? 'bg-[var(--accent-500)] text-white'
               : dateNumberClass,
           ]
             .filter(Boolean)

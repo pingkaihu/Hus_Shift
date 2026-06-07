@@ -44,7 +44,7 @@ function BulkPanelBody({
         {sortedDates.map(date => (
           <span
             key={date}
-            className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium"
+            className="px-2 py-0.5 rounded-full bg-[var(--accent-100)] text-[var(--accent-700)] text-xs font-medium"
           >
             {format(parseISO(date), 'M/d')}
           </span>
