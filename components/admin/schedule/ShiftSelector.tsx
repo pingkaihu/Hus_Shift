@@ -35,18 +35,24 @@ export default function ShiftSelector({
     })
   }
 
-  // In Mode A: profile is disabled if already assigned to this shift on this date
-  function isDisabled(profileId: string): boolean {
-    if (!isModeA || !selectedShiftId) return false
-    return (matrix[selectedShiftId]?.[singleDate] ?? []).some(e => e.profile_id === profileId)
+  function existingShiftOnDate(profileId: string, date: string): Shift | null {
+    for (const shift of shifts) {
+      const entries = matrix[shift.id]?.[date] ?? []
+      if (entries.some(e => e.profile_id === profileId)) return shift
+    }
+    return null
   }
 
-  // In Mode B: collect dates where this profile already has this shift
-  function conflictDates(profileId: string): string[] {
-    if (!selectedShiftId) return []
-    return selectedDates.filter(date =>
-      (matrix[selectedShiftId]?.[date] ?? []).some(e => e.profile_id === profileId)
-    )
+  function isDisabled(profileId: string): boolean {
+    if (!isModeA) return false
+    return existingShiftOnDate(profileId, singleDate) !== null
+  }
+
+  function conflictShiftsOnDates(profileId: string): { date: string; shiftName: string }[] {
+    return selectedDates.flatMap(date => {
+      const shift = existingShiftOnDate(profileId, date)
+      return shift ? [{ date, shiftName: shift.name }] : []
+    })
   }
 
   async function handleConfirm() {
@@ -94,8 +100,9 @@ export default function ShiftSelector({
           ) : (
             <div className="flex flex-col gap-2">
               {profiles.map(profile => {
-                const disabled = isDisabled(profile.id)
-                const conflicts = !isModeA ? conflictDates(profile.id) : []
+                const existingShift = isModeA ? existingShiftOnDate(profile.id, singleDate) : null
+                const disabled = existingShift !== null
+                const conflicts = !isModeA ? conflictShiftsOnDates(profile.id) : []
                 return (
                   <div key={profile.id} className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
@@ -111,13 +118,13 @@ export default function ShiftSelector({
                       >
                         {profile.full_name}
                       </Label>
-                      {disabled && (
-                        <span className="text-xs text-zinc-400">已排班</span>
+                      {existingShift && (
+                        <span className="text-xs text-zinc-400">已排 {existingShift.name}</span>
                       )}
                     </div>
                     {conflicts.length > 0 && (
                       <p className="text-xs text-amber-600 ml-6">
-                        {conflicts.map(d => format(parseISO(d), 'M/d')).join('、')} 已有此班
+                        {conflicts.map(c => `${format(parseISO(c.date), 'M/d')} 已排 ${c.shiftName}`).join('、')}
                       </p>
                     )}
                   </div>
