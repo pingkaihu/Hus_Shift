@@ -2,7 +2,6 @@
 
 import type { Shift, Profile, ScheduleEntry, Holiday, ScheduleMatrix } from '@/lib/types'
 import StaffChip from '@/components/admin/schedule/StaffChip'
-import { useLongPress } from '@/hooks/use-long-press'
 
 interface Props {
   date: string
@@ -13,11 +12,11 @@ interface Props {
   matrix: ScheduleMatrix
   profiles: Profile[]
   isSelected: boolean
+  isSelectingMode: boolean
   filteredProfileId: string | null
   density: 'full' | 'compact'
   onClick: () => void
   onDelete: (entry: ScheduleEntry) => void
-  onLongPress?: () => void
 }
 
 export default function MonthDayCell({
@@ -29,13 +28,12 @@ export default function MonthDayCell({
   matrix,
   profiles,
   isSelected,
+  isSelectingMode,
   filteredProfileId,
   density,
   onClick,
   onDelete,
-  onLongPress,
 }: Props) {
-  const lp = useLongPress(onLongPress ?? (() => {}))
   const dayNumber = date.slice(8) // "DD" portion
 
   const isHoliday = holiday?.is_holiday === true
@@ -52,13 +50,9 @@ export default function MonthDayCell({
   return (
     <button
       type="button"
-      {...lp.handlers}
-      onClick={() => {
-        if (lp.didLongPress()) return
-        onClick()
-      }}
+      onClick={onClick}
       className={[
-        'flex flex-col items-start p-1 w-full min-h-[90px] rounded-md border text-left',
+        'relative flex flex-col items-start p-1 w-full min-h-[90px] rounded-md border text-left',
         'transition-colors focus:outline-none',
         isSelected
           ? 'ring-2 ring-[var(--accent-500)] border-[var(--accent-200)] bg-[var(--accent-50)]'
@@ -151,6 +145,29 @@ export default function MonthDayCell({
               </div>
             )
           })}
+        </div>
+      )}
+      {/* Selection mode circle indicator (mobile batch select) */}
+      {isSelectingMode && (
+        <div
+          className={[
+            'absolute top-1 right-1 w-4 h-4 rounded-full border-2 flex items-center justify-center',
+            isSelected
+              ? 'bg-[var(--accent-500)] border-[var(--accent-500)]'
+              : 'bg-white border-zinc-300',
+          ].join(' ')}
+        >
+          {isSelected && (
+            <svg
+              className="w-2.5 h-2.5 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={3}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
         </div>
       )}
     </button>
